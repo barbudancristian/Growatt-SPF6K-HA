@@ -244,6 +244,8 @@ function fmtH(h){if(!isFinite(h))return '–';const m=Math.round(h*60);return Ma
 function k1(v){return isFinite(v)?v.toFixed(1):'–'}
 function sum(ids){let t=0,ok=false;for(const i of ids){const v=num(i);if(isFinite(v)){t+=v;ok=true}}return ok?t:NaN}
 const hm=t=>new Date(t).toLocaleTimeString('ro-RO',{hour:'2-digit',minute:'2-digit'});
+/* clock time, with the day when it is not today (e.g. "sâm. 05:54") */
+const whenTxt=t=>{const d=new Date(t),n=new Date();return d.toDateString()===n.toDateString()?hm(d):d.toLocaleDateString('ro-RO',{weekday:'short'})+' '+hm(d)};
 const ron=v=>isFinite(v)?(v<0?'−':'')+Math.abs(v).toFixed(2)+' RON':'–';
 const ronN=v=>isFinite(v)?(v<0?'−':'')+Math.abs(v).toFixed(2):'–';
 
@@ -352,7 +354,7 @@ function update(){
   const eta=dis?num(E.etaEmpty):chg?num(E.etaFull):NaN;
   $('b_eta').textContent=fmtH(eta);
   const etat=dis?st(E.etaEmptyT):chg?st(E.etaFullT):null;
-  $('b_etat').textContent=etat&&etat.state&&etat.state!=='unknown'&&etat.state!=='unavailable'?hm(etat.state):'–';
+  $('b_etat').textContent=etat&&etat.state&&etat.state!=='unknown'&&etat.state!=='unavailable'?whenTxt(etat.state):'–';
   const T=(a)=>sum(INV.flatMap(n=>a.map(s=>`sensor.growatt_${n}_${s}`)));
   $('t_pv').innerHTML=k1(T(['pv_energy_today']))+'<small>kWh</small>';
   $('t_load').innerHTML=k1(T(['op_discharge_energy_today']))+'<small>kWh</small>';
@@ -371,7 +373,7 @@ function update(){
     $(`i${n}_pv`).textContent=fmtW(nz(p1)+nz(p2));
     $(`i${n}_pv1`).textContent=fmtW(p1)+' · '+k1(num(p('pv1_voltage')))+' V';
     $(`i${n}_pv2`).textContent=fmtW(p2)+' · '+k1(num(p('pv2_voltage')))+' V';
-    const bpw=num(p('battery_power'));
+    const bpw=num(p('battery_power'))*BATSIGN; /* same sign as the rest of the page */
     $(`i${n}_bat`).textContent=(isFinite(bpw)?sgn(Math.round(bpw))+fmtW(Math.abs(bpw)):'–')+' · '+k1(num(p('battery_voltage')))+' V';
     $(`i${n}_soc`).textContent=k1(num(p('battery_soc')))+' %';
     $(`i${n}_gv`).textContent=k1(num(p('grid_voltage')))+' V · '+k1(num(p('grid_frequency')))+' Hz';
@@ -474,16 +476,17 @@ async function loadHist(){
       entity_ids:ids,minimal_response:true,no_attributes:true,significant_changes_only:false});
     for(const s of SER){
       if(!s.id)continue;
-      const sm=new Array(n).fill(0),cnt=new Array(n).fill(0);
+      /* HA stores a state only when it changes: an empty bucket keeps the last real value, not the previous average */
+      const sm=new Array(n).fill(0),cnt=new Array(n).fill(0),lastv=new Array(n).fill(null);
       for(const r of (res[s.id]||[])){
         const v=parseFloat(r.s);if(!isFinite(v))continue;
         const ts=(r.lu??r.lc)*1000;
-        const i=Math.floor((ts-t0)/step);if(i<0||i>=n)continue;sm[i]+=v*s.sign;cnt[i]++;
+        const i=Math.floor((ts-t0)/step);if(i<0||i>=n)continue;sm[i]+=v*s.sign;cnt[i]++;lastv[i]=v*s.sign;
       }
       let last=null;const arr=[];
       for(let i=0;i<n;i++){
         if(t0+i*step>end){arr.push(null);continue}
-        if(cnt[i])last=sm[i]/cnt[i];arr.push(last);
+        if(cnt[i]){arr.push(sm[i]/cnt[i]);last=lastv[i]}else arr.push(last);
       }
       nd.s[s.k]=arr;
     }
@@ -624,8 +627,9 @@ function draw(){
     for(let i=0;i<a.length;i++){if(a[i]==null)continue;d+=(started?'L':'M')+X(data.t0+i*data.step).toFixed(1)+' '+Y(a[i]).toFixed(1);started=true}
     if(s.area&&started){
       let li=a.length-1;while(li>0&&a[li]==null)li--;
+      let fi=0;while(fi<li&&a[fi]==null)fi++;
       const y0=Y(Math.max(lo,0));
-      o+=`<path d="${d}L${X(data.t0+li*data.step)} ${y0}L${X(data.t0)} ${y0}Z" fill="${s.c}" opacity=".18"/>`;
+      o+=`<path d="${d}L${X(data.t0+li*data.step)} ${y0}L${X(data.t0+fi*data.step)} ${y0}Z" fill="${s.c}" opacity=".18"/>`;
     }
     o+=`<path d="${d}" fill="none" stroke="${s.c}" stroke-width="2" stroke-linejoin="round"/>`;
   }
