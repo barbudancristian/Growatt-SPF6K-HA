@@ -13,6 +13,7 @@ import persist
 import webserver
 import json
 import string
+import mqtt
 
 GW_STATUS = ["Standby", "-", "Discharge", "Fault", "-", "PV charge", "AC charge",
                  "Combined charge", "Combined charge + bypass", "PV charge + bypass",

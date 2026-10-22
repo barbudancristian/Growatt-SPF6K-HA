@@ -71,8 +71,6 @@ class tcpserver
   def hasclient() return size(PENDING) > 0 end
   def accept() var c = PENDING[0] PENDING.remove(0) return c end
 end
-class MqttStub def connected() return true end end
-mqtt = MqttStub()
 
 class TasStub
   var drivers, fast, resp, sent, st, cmds

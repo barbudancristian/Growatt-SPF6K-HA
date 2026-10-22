@@ -5,7 +5,7 @@ set -euo pipefail
 BERRY="${1:?path to the berry interpreter}"
 HERE="$(cd "$(dirname "$0")" && pwd)"
 TMP="$(mktemp -d)"
-cp "$HERE/persist.be" "$HERE/webserver.be" "$TMP/"
+cp "$HERE/persist.be" "$HERE/webserver.be" "$HERE/mqtt.be" "$TMP/"
 cat "$HERE/sim_before.be" "$HERE/../dongle/growatt.be" "$HERE/sim_after.be" > "$TMP/body.be"
 # The device compiles growatt.be with strict mode on, so compile the test the same way.
 cat > "$TMP/run.be" <<'BE'
