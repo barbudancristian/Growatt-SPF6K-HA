@@ -174,7 +174,8 @@ Nu folosim un *blueprint* Home Assistant: blueprint-urile pentru template creeaz
 
 ### Dashboard
 
-<p><img src="img/dashboard-3.png" width="640" alt="Dashboard, trei invertoare"></p>
+<p><img src="img/dashboard-3.png" width="640" alt="Dashboard, trei invertoare">
+<img src="img/dashboard-1.png" width="640" alt="Dashboard, un invertor off-grid"></p>
 
 Două pagini gata făcute, cu același design:
 

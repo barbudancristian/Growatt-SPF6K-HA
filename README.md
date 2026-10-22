@@ -13,6 +13,30 @@ Firmware for the Growatt **ShineWiFi-X2** stick that turns it into a local gatew
 - **Settings page** with network (DHCP or static), MQTT with a **Test server** button, device name, admin password and Modbus options.
 - **Status page** with the live inverter values, and firmware updates from the browser.
 
+## Home Assistant dashboard
+
+A ready dashboard page shows the whole system at a glance. It reads the sensors created by the packages in `homeassistant/packages/` and is added to Home Assistant as a **Webpage** card (see the [guide](docs/GUIDE.en.md#dashboard)). Design by Andrei Cristetiu.
+
+### Three inverters with grid
+
+<img src="docs/img/dashboard-3.png" width="820" alt="Dashboard for three Growatt inverters">
+
+`homeassistant/dashboard/solar-3-inverters.html`, for example one inverter per phase (L1, L2, L3):
+
+- **Energy flow** (top left): solar, grid, house and battery around the three inverters, with animated lines in the direction of the power. The battery ring shows the average SOC.
+- **Savings** (top left box): money saved in total, this month and today, at the price set in the page (RON/kWh).
+- **Today** (top right): production, consumption, battery discharge and charging from the grid, plus battery state, power, voltage, time left and the clock time when it will be empty or full.
+- **One card per inverter**: output power and load bar, PV1/PV2, battery, SOC, grid, output voltage, temperature, today's PV and the inverter status (for example "PV + bypass").
+- **Power over time**: day, 24 h, 48 h or month; solar, load, battery and grid curves with the solar forecast as a dashed line; tiles with real production, consumption, forecast and savings. The month view shows daily bars in kWh or RON.
+
+### One off-grid inverter
+
+<img src="docs/img/dashboard-1.png" width="820" alt="Dashboard for one off-grid Growatt inverter">
+
+`homeassistant/dashboard/solar-1-inverter.html`, for a single inverter without grid (a cabin, for example): the same page without the grid node, grid tiles and grid curve, and one wide inverter card.
+
+Both pages are set in the `CONFIG` block at the top of the file (title, number of inverters, grid or off-grid, energy price). The forecast tiles need the Forecast.Solar integration. The screenshots show sample data.
+
 ## Hardware
 
 | | |

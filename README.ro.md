@@ -13,6 +13,30 @@ Firmware pentru stick-ul Growatt **ShineWiFi-X2** care îl transformă într-o p
 - **Pagină de setări**: rețea (DHCP sau statică), MQTT cu buton **Test server**, nume, parolă de admin și opțiuni Modbus.
 - **Pagină de stare** cu valorile live ale invertorului, plus actualizări de firmware din browser.
 
+## Dashboard Home Assistant
+
+O pagină de dashboard gata făcută arată tot sistemul dintr-o privire. Citește senzorii creați de pachetele din `homeassistant/packages/` și se adaugă în Home Assistant ca un card **Webpage** (vezi [ghidul](docs/GHID.ro.md#dashboard)). Design: Andrei Cristetiu.
+
+### Trei invertoare, cu rețea
+
+<img src="docs/img/dashboard-3.png" width="820" alt="Dashboard pentru trei invertoare Growatt">
+
+`homeassistant/dashboard/solar-3-inverters.html`, de exemplu câte un invertor pe fiecare fază (L1, L2, L3):
+
+- **Fluxul de energie** (stânga sus): soarele, rețeaua, casa și bateria în jurul celor trei invertoare, cu linii animate în sensul în care circulă puterea. Inelul bateriei arată SOC-ul mediu.
+- **Economii** (caseta din stânga sus): banii economisiți în total, luna asta și azi, la prețul setat în pagină (RON/kWh).
+- **Azi** (dreapta sus): producția, consumul, descărcarea bateriei și încărcarea din rețea, plus starea bateriei, puterea, tensiunea, timpul rămas și ora la care va fi goală sau plină.
+- **Câte un card pentru fiecare invertor**: puterea de ieșire și bara de încărcare, PV1/PV2, bateria, SOC-ul, rețeaua, tensiunea de ieșire, temperatura, producția de azi și starea invertorului (de exemplu „PV + bypass”).
+- **Puterea în timp**: zi, 24 h, 48 h sau lună; curbele pentru soare, consum, baterie și rețea, cu prognoza solară punctată; plăcuțe cu producția reală, consumul, prognoza și economiile. Vederea pe lună arată bare pe zile, în kWh sau RON.
+
+### Un invertor off-grid
+
+<img src="docs/img/dashboard-1.png" width="820" alt="Dashboard pentru un invertor Growatt off-grid">
+
+`homeassistant/dashboard/solar-1-inverter.html`, pentru un singur invertor fără rețea (de exemplu la o cabană): aceeași pagină, fără rețea în flux, în plăcuțe și în grafic, și cu un singur card lat pentru invertor.
+
+Ambele pagini se setează din blocul `CONFIG` de la începutul fișierului (titlu, număr de invertoare, cu sau fără rețea, prețul energiei). Plăcuțele cu prognoza au nevoie de integrarea Forecast.Solar. Capturile arată date de exemplu.
+
 ## Hardware
 
 | | |

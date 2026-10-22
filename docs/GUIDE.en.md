@@ -174,7 +174,8 @@ A Home Assistant *blueprint* is not used here: template blueprints create one en
 
 ### Dashboard
 
-<p><img src="img/dashboard-3.png" width="640" alt="Dashboard, three inverters"></p>
+<p><img src="img/dashboard-3.png" width="640" alt="Dashboard, three inverters">
+<img src="img/dashboard-1.png" width="640" alt="Dashboard, one off-grid inverter"></p>
 
 Two ready pages, with the same design:
 
