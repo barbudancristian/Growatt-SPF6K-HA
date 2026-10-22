@@ -76,7 +76,7 @@ mqtt:
       unique_id: growatt_1_output_power
       default_entity_id: sensor.growatt_1_output_power
       state_topic: "tele/growatt_INV1/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Output', {}).get('Power') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Output', {}).get('Power') %}{{ (v) | round(0) | int if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV1/LWT"
@@ -99,7 +99,7 @@ mqtt:
       unique_id: growatt_1_output_apparent_power
       default_entity_id: sensor.growatt_1_output_apparent_power
       state_topic: "tele/growatt_INV1/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Output', {}).get('ApparentPower') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Output', {}).get('ApparentPower') %}{{ (v) | round(0) | int if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV1/LWT"
@@ -122,7 +122,7 @@ mqtt:
       unique_id: growatt_1_load_percentage
       default_entity_id: sensor.growatt_1_load_percentage
       state_topic: "tele/growatt_INV1/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Output', {}).get('Load') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Output', {}).get('Load') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV1/LWT"
@@ -144,7 +144,7 @@ mqtt:
       unique_id: growatt_1_output_voltage
       default_entity_id: sensor.growatt_1_output_voltage
       state_topic: "tele/growatt_INV1/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Output', {}).get('Voltage') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Output', {}).get('Voltage') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV1/LWT"
@@ -167,7 +167,7 @@ mqtt:
       unique_id: growatt_1_output_frequency
       default_entity_id: sensor.growatt_1_output_frequency
       state_topic: "tele/growatt_INV1/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Output', {}).get('Frequency') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Output', {}).get('Frequency') %}{{ (v) | round(2) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV1/LWT"
@@ -190,7 +190,7 @@ mqtt:
       unique_id: growatt_1_output_current
       default_entity_id: sensor.growatt_1_output_current
       state_topic: "tele/growatt_INV1/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Output', {}).get('Current') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Output', {}).get('Current') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV1/LWT"
@@ -213,7 +213,7 @@ mqtt:
       unique_id: growatt_1_pv1_power
       default_entity_id: sensor.growatt_1_pv1_power
       state_topic: "tele/growatt_INV1/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('PV1', {}).get('Power') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('PV1', {}).get('Power') %}{{ (v) | round(0) | int if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV1/LWT"
@@ -236,7 +236,7 @@ mqtt:
       unique_id: growatt_1_pv1_voltage
       default_entity_id: sensor.growatt_1_pv1_voltage
       state_topic: "tele/growatt_INV1/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('PV1', {}).get('Voltage') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('PV1', {}).get('Voltage') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV1/LWT"
@@ -259,7 +259,7 @@ mqtt:
       unique_id: growatt_1_pv1_current
       default_entity_id: sensor.growatt_1_pv1_current
       state_topic: "tele/growatt_INV1/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('PV1', {}).get('Current') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('PV1', {}).get('Current') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV1/LWT"
@@ -282,7 +282,7 @@ mqtt:
       unique_id: growatt_1_pv2_power
       default_entity_id: sensor.growatt_1_pv2_power
       state_topic: "tele/growatt_INV1/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('PV2', {}).get('Power') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('PV2', {}).get('Power') %}{{ (v) | round(0) | int if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV1/LWT"
@@ -305,7 +305,7 @@ mqtt:
       unique_id: growatt_1_pv2_voltage
       default_entity_id: sensor.growatt_1_pv2_voltage
       state_topic: "tele/growatt_INV1/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('PV2', {}).get('Voltage') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('PV2', {}).get('Voltage') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV1/LWT"
@@ -328,7 +328,7 @@ mqtt:
       unique_id: growatt_1_pv2_current
       default_entity_id: sensor.growatt_1_pv2_current
       state_topic: "tele/growatt_INV1/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('PV2', {}).get('Current') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('PV2', {}).get('Current') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV1/LWT"
@@ -351,7 +351,7 @@ mqtt:
       unique_id: growatt_1_battery_power
       default_entity_id: sensor.growatt_1_battery_power
       state_topic: "tele/growatt_INV1/SENSOR"
-      value_template: "{% set v = value_json.get('Growatt', {}).get('Battery', {}).get('Power') %}{{ -v if v is number else none }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Battery', {}).get('Power') %}{{ (-v) | round(0) | int if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV1/LWT"
@@ -374,7 +374,7 @@ mqtt:
       unique_id: growatt_1_battery_voltage
       default_entity_id: sensor.growatt_1_battery_voltage
       state_topic: "tele/growatt_INV1/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Battery', {}).get('Voltage') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Battery', {}).get('Voltage') %}{{ (v) | round(2) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV1/LWT"
@@ -397,7 +397,7 @@ mqtt:
       unique_id: growatt_1_battery_soc
       default_entity_id: sensor.growatt_1_battery_soc
       state_topic: "tele/growatt_INV1/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Battery', {}).get('SOC') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Battery', {}).get('SOC') %}{{ (v) | round(0) | int if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV1/LWT"
@@ -420,7 +420,7 @@ mqtt:
       unique_id: growatt_1_battery_discharge_current
       default_entity_id: sensor.growatt_1_battery_discharge_current
       state_topic: "tele/growatt_INV1/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Battery', {}).get('DischargeCurrent') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Battery', {}).get('DischargeCurrent') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV1/LWT"
@@ -443,7 +443,7 @@ mqtt:
       unique_id: growatt_1_grid_voltage
       default_entity_id: sensor.growatt_1_grid_voltage
       state_topic: "tele/growatt_INV1/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Grid', {}).get('Voltage') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Grid', {}).get('Voltage') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV1/LWT"
@@ -466,7 +466,7 @@ mqtt:
       unique_id: growatt_1_grid_frequency
       default_entity_id: sensor.growatt_1_grid_frequency
       state_topic: "tele/growatt_INV1/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Grid', {}).get('Frequency') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Grid', {}).get('Frequency') %}{{ (v) | round(2) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV1/LWT"
@@ -489,7 +489,7 @@ mqtt:
       unique_id: growatt_1_ac_charge_power
       default_entity_id: sensor.growatt_1_ac_charge_power
       state_topic: "tele/growatt_INV1/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Grid', {}).get('ACChargePower') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Grid', {}).get('ACChargePower') %}{{ (v) | round(0) | int if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV1/LWT"
@@ -512,7 +512,7 @@ mqtt:
       unique_id: growatt_1_grid_power
       default_entity_id: sensor.growatt_1_grid_power
       state_topic: "tele/growatt_INV1/SENSOR"
-      value_template: "{% set g = value_json.get('Growatt', {}) %}{% set out = g.get('Output', {}).get('Power') %}{% set ac = g.get('Grid', {}).get('ACChargePower') %}{% if out is number and ac is number %}{{ (out if g.get('StatusCode') in [8, 9, 10, 11] else 0) + ac }}{% else %}{{ none }}{% endif %}"
+      value_template: "{% set g = value_json.get('Growatt', {}) %}{% set out = g.get('Output', {}).get('Power') %}{% set ac = g.get('Grid', {}).get('ACChargePower') %}{% if out is number and ac is number %}{{ ((out if g.get('StatusCode') in [8, 9, 10, 11] else 0) + ac) | round(0) | int }}{% else %}{{ none }}{% endif %}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV1/LWT"
@@ -535,7 +535,7 @@ mqtt:
       unique_id: growatt_1_inverter_temperature
       default_entity_id: sensor.growatt_1_inverter_temperature
       state_topic: "tele/growatt_INV1/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Inverter', {}).get('Temperature') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Inverter', {}).get('Temperature') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV1/LWT"
@@ -558,7 +558,7 @@ mqtt:
       unique_id: growatt_1_dcdc_temperature
       default_entity_id: sensor.growatt_1_dcdc_temperature
       state_topic: "tele/growatt_INV1/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Inverter', {}).get('DCDCTemperature') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Inverter', {}).get('DCDCTemperature') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV1/LWT"
@@ -581,7 +581,7 @@ mqtt:
       unique_id: growatt_1_bus_voltage
       default_entity_id: sensor.growatt_1_bus_voltage
       state_topic: "tele/growatt_INV1/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Inverter', {}).get('BusVoltage') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Inverter', {}).get('BusVoltage') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV1/LWT"
@@ -642,7 +642,7 @@ mqtt:
       unique_id: growatt_1_pv_energy_today
       default_entity_id: sensor.growatt_1_pv_energy_today
       state_topic: "tele/growatt_INV1/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Energy', {}).get('PVToday') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Energy', {}).get('PVToday') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV1/LWT"
@@ -665,7 +665,7 @@ mqtt:
       unique_id: growatt_1_pv_energy_total
       default_entity_id: sensor.growatt_1_pv_energy_total
       state_topic: "tele/growatt_INV1/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Energy', {}).get('PVTotal') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Energy', {}).get('PVTotal') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV1/LWT"
@@ -688,7 +688,7 @@ mqtt:
       unique_id: growatt_1_op_discharge_energy_today
       default_entity_id: sensor.growatt_1_op_discharge_energy_today
       state_topic: "tele/growatt_INV1/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Energy', {}).get('LoadToday') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Energy', {}).get('LoadToday') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV1/LWT"
@@ -711,7 +711,7 @@ mqtt:
       unique_id: growatt_1_op_discharge_energy_total
       default_entity_id: sensor.growatt_1_op_discharge_energy_total
       state_topic: "tele/growatt_INV1/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Energy', {}).get('LoadTotal') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Energy', {}).get('LoadTotal') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV1/LWT"
@@ -734,7 +734,7 @@ mqtt:
       unique_id: growatt_1_battery_discharge_energy_today
       default_entity_id: sensor.growatt_1_battery_discharge_energy_today
       state_topic: "tele/growatt_INV1/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Energy', {}).get('DischargeToday') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Energy', {}).get('DischargeToday') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV1/LWT"
@@ -757,7 +757,7 @@ mqtt:
       unique_id: growatt_1_battery_discharge_energy_total
       default_entity_id: sensor.growatt_1_battery_discharge_energy_total
       state_topic: "tele/growatt_INV1/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Energy', {}).get('DischargeTotal') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Energy', {}).get('DischargeTotal') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV1/LWT"
@@ -780,7 +780,7 @@ mqtt:
       unique_id: growatt_1_ac_charge_energy_today
       default_entity_id: sensor.growatt_1_ac_charge_energy_today
       state_topic: "tele/growatt_INV1/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Energy', {}).get('ACChargeToday') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Energy', {}).get('ACChargeToday') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV1/LWT"
@@ -803,7 +803,7 @@ mqtt:
       unique_id: growatt_1_ac_charge_energy_total
       default_entity_id: sensor.growatt_1_ac_charge_energy_total
       state_topic: "tele/growatt_INV1/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Energy', {}).get('ACChargeTotal') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Energy', {}).get('ACChargeTotal') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV1/LWT"
@@ -826,7 +826,7 @@ mqtt:
       unique_id: growatt_1_ac_discharge_energy_today
       default_entity_id: sensor.growatt_1_ac_discharge_energy_today
       state_topic: "tele/growatt_INV1/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Energy', {}).get('ACDischargeToday') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Energy', {}).get('ACDischargeToday') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV1/LWT"
@@ -849,7 +849,7 @@ mqtt:
       unique_id: growatt_1_ac_discharge_energy_total
       default_entity_id: sensor.growatt_1_ac_discharge_energy_total
       state_topic: "tele/growatt_INV1/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Energy', {}).get('ACDischargeTotal') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Energy', {}).get('ACDischargeTotal') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV1/LWT"
@@ -929,7 +929,7 @@ mqtt:
       unique_id: growatt_1_max_charge_current
       default_entity_id: sensor.growatt_1_max_charge_current
       state_topic: "tele/growatt_INV1/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Settings', {}).get('MaxChargeCurrent') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Settings', {}).get('MaxChargeCurrent') %}{{ (v) | round(0) | int if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV1/LWT"
@@ -989,7 +989,7 @@ mqtt:
       unique_id: growatt_2_output_power
       default_entity_id: sensor.growatt_2_output_power
       state_topic: "tele/growatt_INV2/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Output', {}).get('Power') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Output', {}).get('Power') %}{{ (v) | round(0) | int if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV2/LWT"
@@ -1012,7 +1012,7 @@ mqtt:
       unique_id: growatt_2_output_apparent_power
       default_entity_id: sensor.growatt_2_output_apparent_power
       state_topic: "tele/growatt_INV2/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Output', {}).get('ApparentPower') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Output', {}).get('ApparentPower') %}{{ (v) | round(0) | int if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV2/LWT"
@@ -1035,7 +1035,7 @@ mqtt:
       unique_id: growatt_2_load_percentage
       default_entity_id: sensor.growatt_2_load_percentage
       state_topic: "tele/growatt_INV2/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Output', {}).get('Load') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Output', {}).get('Load') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV2/LWT"
@@ -1057,7 +1057,7 @@ mqtt:
       unique_id: growatt_2_output_voltage
       default_entity_id: sensor.growatt_2_output_voltage
       state_topic: "tele/growatt_INV2/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Output', {}).get('Voltage') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Output', {}).get('Voltage') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV2/LWT"
@@ -1080,7 +1080,7 @@ mqtt:
       unique_id: growatt_2_output_frequency
       default_entity_id: sensor.growatt_2_output_frequency
       state_topic: "tele/growatt_INV2/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Output', {}).get('Frequency') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Output', {}).get('Frequency') %}{{ (v) | round(2) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV2/LWT"
@@ -1103,7 +1103,7 @@ mqtt:
       unique_id: growatt_2_output_current
       default_entity_id: sensor.growatt_2_output_current
       state_topic: "tele/growatt_INV2/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Output', {}).get('Current') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Output', {}).get('Current') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV2/LWT"
@@ -1126,7 +1126,7 @@ mqtt:
       unique_id: growatt_2_pv1_power
       default_entity_id: sensor.growatt_2_pv1_power
       state_topic: "tele/growatt_INV2/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('PV1', {}).get('Power') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('PV1', {}).get('Power') %}{{ (v) | round(0) | int if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV2/LWT"
@@ -1149,7 +1149,7 @@ mqtt:
       unique_id: growatt_2_pv1_voltage
       default_entity_id: sensor.growatt_2_pv1_voltage
       state_topic: "tele/growatt_INV2/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('PV1', {}).get('Voltage') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('PV1', {}).get('Voltage') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV2/LWT"
@@ -1172,7 +1172,7 @@ mqtt:
       unique_id: growatt_2_pv1_current
       default_entity_id: sensor.growatt_2_pv1_current
       state_topic: "tele/growatt_INV2/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('PV1', {}).get('Current') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('PV1', {}).get('Current') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV2/LWT"
@@ -1195,7 +1195,7 @@ mqtt:
       unique_id: growatt_2_pv2_power
       default_entity_id: sensor.growatt_2_pv2_power
       state_topic: "tele/growatt_INV2/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('PV2', {}).get('Power') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('PV2', {}).get('Power') %}{{ (v) | round(0) | int if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV2/LWT"
@@ -1218,7 +1218,7 @@ mqtt:
       unique_id: growatt_2_pv2_voltage
       default_entity_id: sensor.growatt_2_pv2_voltage
       state_topic: "tele/growatt_INV2/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('PV2', {}).get('Voltage') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('PV2', {}).get('Voltage') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV2/LWT"
@@ -1241,7 +1241,7 @@ mqtt:
       unique_id: growatt_2_pv2_current
       default_entity_id: sensor.growatt_2_pv2_current
       state_topic: "tele/growatt_INV2/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('PV2', {}).get('Current') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('PV2', {}).get('Current') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV2/LWT"
@@ -1264,7 +1264,7 @@ mqtt:
       unique_id: growatt_2_battery_power
       default_entity_id: sensor.growatt_2_battery_power
       state_topic: "tele/growatt_INV2/SENSOR"
-      value_template: "{% set v = value_json.get('Growatt', {}).get('Battery', {}).get('Power') %}{{ -v if v is number else none }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Battery', {}).get('Power') %}{{ (-v) | round(0) | int if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV2/LWT"
@@ -1287,7 +1287,7 @@ mqtt:
       unique_id: growatt_2_battery_voltage
       default_entity_id: sensor.growatt_2_battery_voltage
       state_topic: "tele/growatt_INV2/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Battery', {}).get('Voltage') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Battery', {}).get('Voltage') %}{{ (v) | round(2) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV2/LWT"
@@ -1310,7 +1310,7 @@ mqtt:
       unique_id: growatt_2_battery_soc
       default_entity_id: sensor.growatt_2_battery_soc
       state_topic: "tele/growatt_INV2/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Battery', {}).get('SOC') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Battery', {}).get('SOC') %}{{ (v) | round(0) | int if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV2/LWT"
@@ -1333,7 +1333,7 @@ mqtt:
       unique_id: growatt_2_battery_discharge_current
       default_entity_id: sensor.growatt_2_battery_discharge_current
       state_topic: "tele/growatt_INV2/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Battery', {}).get('DischargeCurrent') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Battery', {}).get('DischargeCurrent') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV2/LWT"
@@ -1356,7 +1356,7 @@ mqtt:
       unique_id: growatt_2_grid_voltage
       default_entity_id: sensor.growatt_2_grid_voltage
       state_topic: "tele/growatt_INV2/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Grid', {}).get('Voltage') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Grid', {}).get('Voltage') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV2/LWT"
@@ -1379,7 +1379,7 @@ mqtt:
       unique_id: growatt_2_grid_frequency
       default_entity_id: sensor.growatt_2_grid_frequency
       state_topic: "tele/growatt_INV2/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Grid', {}).get('Frequency') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Grid', {}).get('Frequency') %}{{ (v) | round(2) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV2/LWT"
@@ -1402,7 +1402,7 @@ mqtt:
       unique_id: growatt_2_ac_charge_power
       default_entity_id: sensor.growatt_2_ac_charge_power
       state_topic: "tele/growatt_INV2/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Grid', {}).get('ACChargePower') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Grid', {}).get('ACChargePower') %}{{ (v) | round(0) | int if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV2/LWT"
@@ -1425,7 +1425,7 @@ mqtt:
       unique_id: growatt_2_grid_power
       default_entity_id: sensor.growatt_2_grid_power
       state_topic: "tele/growatt_INV2/SENSOR"
-      value_template: "{% set g = value_json.get('Growatt', {}) %}{% set out = g.get('Output', {}).get('Power') %}{% set ac = g.get('Grid', {}).get('ACChargePower') %}{% if out is number and ac is number %}{{ (out if g.get('StatusCode') in [8, 9, 10, 11] else 0) + ac }}{% else %}{{ none }}{% endif %}"
+      value_template: "{% set g = value_json.get('Growatt', {}) %}{% set out = g.get('Output', {}).get('Power') %}{% set ac = g.get('Grid', {}).get('ACChargePower') %}{% if out is number and ac is number %}{{ ((out if g.get('StatusCode') in [8, 9, 10, 11] else 0) + ac) | round(0) | int }}{% else %}{{ none }}{% endif %}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV2/LWT"
@@ -1448,7 +1448,7 @@ mqtt:
       unique_id: growatt_2_inverter_temperature
       default_entity_id: sensor.growatt_2_inverter_temperature
       state_topic: "tele/growatt_INV2/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Inverter', {}).get('Temperature') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Inverter', {}).get('Temperature') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV2/LWT"
@@ -1471,7 +1471,7 @@ mqtt:
       unique_id: growatt_2_dcdc_temperature
       default_entity_id: sensor.growatt_2_dcdc_temperature
       state_topic: "tele/growatt_INV2/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Inverter', {}).get('DCDCTemperature') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Inverter', {}).get('DCDCTemperature') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV2/LWT"
@@ -1494,7 +1494,7 @@ mqtt:
       unique_id: growatt_2_bus_voltage
       default_entity_id: sensor.growatt_2_bus_voltage
       state_topic: "tele/growatt_INV2/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Inverter', {}).get('BusVoltage') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Inverter', {}).get('BusVoltage') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV2/LWT"
@@ -1555,7 +1555,7 @@ mqtt:
       unique_id: growatt_2_pv_energy_today
       default_entity_id: sensor.growatt_2_pv_energy_today
       state_topic: "tele/growatt_INV2/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Energy', {}).get('PVToday') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Energy', {}).get('PVToday') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV2/LWT"
@@ -1578,7 +1578,7 @@ mqtt:
       unique_id: growatt_2_pv_energy_total
       default_entity_id: sensor.growatt_2_pv_energy_total
       state_topic: "tele/growatt_INV2/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Energy', {}).get('PVTotal') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Energy', {}).get('PVTotal') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV2/LWT"
@@ -1601,7 +1601,7 @@ mqtt:
       unique_id: growatt_2_op_discharge_energy_today
       default_entity_id: sensor.growatt_2_op_discharge_energy_today
       state_topic: "tele/growatt_INV2/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Energy', {}).get('LoadToday') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Energy', {}).get('LoadToday') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV2/LWT"
@@ -1624,7 +1624,7 @@ mqtt:
       unique_id: growatt_2_op_discharge_energy_total
       default_entity_id: sensor.growatt_2_op_discharge_energy_total
       state_topic: "tele/growatt_INV2/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Energy', {}).get('LoadTotal') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Energy', {}).get('LoadTotal') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV2/LWT"
@@ -1647,7 +1647,7 @@ mqtt:
       unique_id: growatt_2_battery_discharge_energy_today
       default_entity_id: sensor.growatt_2_battery_discharge_energy_today
       state_topic: "tele/growatt_INV2/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Energy', {}).get('DischargeToday') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Energy', {}).get('DischargeToday') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV2/LWT"
@@ -1670,7 +1670,7 @@ mqtt:
       unique_id: growatt_2_battery_discharge_energy_total
       default_entity_id: sensor.growatt_2_battery_discharge_energy_total
       state_topic: "tele/growatt_INV2/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Energy', {}).get('DischargeTotal') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Energy', {}).get('DischargeTotal') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV2/LWT"
@@ -1693,7 +1693,7 @@ mqtt:
       unique_id: growatt_2_ac_charge_energy_today
       default_entity_id: sensor.growatt_2_ac_charge_energy_today
       state_topic: "tele/growatt_INV2/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Energy', {}).get('ACChargeToday') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Energy', {}).get('ACChargeToday') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV2/LWT"
@@ -1716,7 +1716,7 @@ mqtt:
       unique_id: growatt_2_ac_charge_energy_total
       default_entity_id: sensor.growatt_2_ac_charge_energy_total
       state_topic: "tele/growatt_INV2/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Energy', {}).get('ACChargeTotal') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Energy', {}).get('ACChargeTotal') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV2/LWT"
@@ -1739,7 +1739,7 @@ mqtt:
       unique_id: growatt_2_ac_discharge_energy_today
       default_entity_id: sensor.growatt_2_ac_discharge_energy_today
       state_topic: "tele/growatt_INV2/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Energy', {}).get('ACDischargeToday') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Energy', {}).get('ACDischargeToday') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV2/LWT"
@@ -1762,7 +1762,7 @@ mqtt:
       unique_id: growatt_2_ac_discharge_energy_total
       default_entity_id: sensor.growatt_2_ac_discharge_energy_total
       state_topic: "tele/growatt_INV2/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Energy', {}).get('ACDischargeTotal') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Energy', {}).get('ACDischargeTotal') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV2/LWT"
@@ -1842,7 +1842,7 @@ mqtt:
       unique_id: growatt_2_max_charge_current
       default_entity_id: sensor.growatt_2_max_charge_current
       state_topic: "tele/growatt_INV2/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Settings', {}).get('MaxChargeCurrent') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Settings', {}).get('MaxChargeCurrent') %}{{ (v) | round(0) | int if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV2/LWT"
@@ -1902,7 +1902,7 @@ mqtt:
       unique_id: growatt_3_output_power
       default_entity_id: sensor.growatt_3_output_power
       state_topic: "tele/growatt_INV3/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Output', {}).get('Power') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Output', {}).get('Power') %}{{ (v) | round(0) | int if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV3/LWT"
@@ -1925,7 +1925,7 @@ mqtt:
       unique_id: growatt_3_output_apparent_power
       default_entity_id: sensor.growatt_3_output_apparent_power
       state_topic: "tele/growatt_INV3/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Output', {}).get('ApparentPower') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Output', {}).get('ApparentPower') %}{{ (v) | round(0) | int if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV3/LWT"
@@ -1948,7 +1948,7 @@ mqtt:
       unique_id: growatt_3_load_percentage
       default_entity_id: sensor.growatt_3_load_percentage
       state_topic: "tele/growatt_INV3/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Output', {}).get('Load') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Output', {}).get('Load') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV3/LWT"
@@ -1970,7 +1970,7 @@ mqtt:
       unique_id: growatt_3_output_voltage
       default_entity_id: sensor.growatt_3_output_voltage
       state_topic: "tele/growatt_INV3/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Output', {}).get('Voltage') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Output', {}).get('Voltage') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV3/LWT"
@@ -1993,7 +1993,7 @@ mqtt:
       unique_id: growatt_3_output_frequency
       default_entity_id: sensor.growatt_3_output_frequency
       state_topic: "tele/growatt_INV3/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Output', {}).get('Frequency') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Output', {}).get('Frequency') %}{{ (v) | round(2) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV3/LWT"
@@ -2016,7 +2016,7 @@ mqtt:
       unique_id: growatt_3_output_current
       default_entity_id: sensor.growatt_3_output_current
       state_topic: "tele/growatt_INV3/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Output', {}).get('Current') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Output', {}).get('Current') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV3/LWT"
@@ -2039,7 +2039,7 @@ mqtt:
       unique_id: growatt_3_pv1_power
       default_entity_id: sensor.growatt_3_pv1_power
       state_topic: "tele/growatt_INV3/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('PV1', {}).get('Power') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('PV1', {}).get('Power') %}{{ (v) | round(0) | int if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV3/LWT"
@@ -2062,7 +2062,7 @@ mqtt:
       unique_id: growatt_3_pv1_voltage
       default_entity_id: sensor.growatt_3_pv1_voltage
       state_topic: "tele/growatt_INV3/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('PV1', {}).get('Voltage') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('PV1', {}).get('Voltage') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV3/LWT"
@@ -2085,7 +2085,7 @@ mqtt:
       unique_id: growatt_3_pv1_current
       default_entity_id: sensor.growatt_3_pv1_current
       state_topic: "tele/growatt_INV3/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('PV1', {}).get('Current') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('PV1', {}).get('Current') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV3/LWT"
@@ -2108,7 +2108,7 @@ mqtt:
       unique_id: growatt_3_pv2_power
       default_entity_id: sensor.growatt_3_pv2_power
       state_topic: "tele/growatt_INV3/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('PV2', {}).get('Power') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('PV2', {}).get('Power') %}{{ (v) | round(0) | int if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV3/LWT"
@@ -2131,7 +2131,7 @@ mqtt:
       unique_id: growatt_3_pv2_voltage
       default_entity_id: sensor.growatt_3_pv2_voltage
       state_topic: "tele/growatt_INV3/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('PV2', {}).get('Voltage') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('PV2', {}).get('Voltage') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV3/LWT"
@@ -2154,7 +2154,7 @@ mqtt:
       unique_id: growatt_3_pv2_current
       default_entity_id: sensor.growatt_3_pv2_current
       state_topic: "tele/growatt_INV3/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('PV2', {}).get('Current') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('PV2', {}).get('Current') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV3/LWT"
@@ -2177,7 +2177,7 @@ mqtt:
       unique_id: growatt_3_battery_power
       default_entity_id: sensor.growatt_3_battery_power
       state_topic: "tele/growatt_INV3/SENSOR"
-      value_template: "{% set v = value_json.get('Growatt', {}).get('Battery', {}).get('Power') %}{{ -v if v is number else none }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Battery', {}).get('Power') %}{{ (-v) | round(0) | int if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV3/LWT"
@@ -2200,7 +2200,7 @@ mqtt:
       unique_id: growatt_3_battery_voltage
       default_entity_id: sensor.growatt_3_battery_voltage
       state_topic: "tele/growatt_INV3/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Battery', {}).get('Voltage') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Battery', {}).get('Voltage') %}{{ (v) | round(2) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV3/LWT"
@@ -2223,7 +2223,7 @@ mqtt:
       unique_id: growatt_3_battery_soc
       default_entity_id: sensor.growatt_3_battery_soc
       state_topic: "tele/growatt_INV3/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Battery', {}).get('SOC') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Battery', {}).get('SOC') %}{{ (v) | round(0) | int if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV3/LWT"
@@ -2246,7 +2246,7 @@ mqtt:
       unique_id: growatt_3_battery_discharge_current
       default_entity_id: sensor.growatt_3_battery_discharge_current
       state_topic: "tele/growatt_INV3/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Battery', {}).get('DischargeCurrent') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Battery', {}).get('DischargeCurrent') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV3/LWT"
@@ -2269,7 +2269,7 @@ mqtt:
       unique_id: growatt_3_grid_voltage
       default_entity_id: sensor.growatt_3_grid_voltage
       state_topic: "tele/growatt_INV3/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Grid', {}).get('Voltage') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Grid', {}).get('Voltage') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV3/LWT"
@@ -2292,7 +2292,7 @@ mqtt:
       unique_id: growatt_3_grid_frequency
       default_entity_id: sensor.growatt_3_grid_frequency
       state_topic: "tele/growatt_INV3/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Grid', {}).get('Frequency') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Grid', {}).get('Frequency') %}{{ (v) | round(2) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV3/LWT"
@@ -2315,7 +2315,7 @@ mqtt:
       unique_id: growatt_3_ac_charge_power
       default_entity_id: sensor.growatt_3_ac_charge_power
       state_topic: "tele/growatt_INV3/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Grid', {}).get('ACChargePower') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Grid', {}).get('ACChargePower') %}{{ (v) | round(0) | int if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV3/LWT"
@@ -2338,7 +2338,7 @@ mqtt:
       unique_id: growatt_3_grid_power
       default_entity_id: sensor.growatt_3_grid_power
       state_topic: "tele/growatt_INV3/SENSOR"
-      value_template: "{% set g = value_json.get('Growatt', {}) %}{% set out = g.get('Output', {}).get('Power') %}{% set ac = g.get('Grid', {}).get('ACChargePower') %}{% if out is number and ac is number %}{{ (out if g.get('StatusCode') in [8, 9, 10, 11] else 0) + ac }}{% else %}{{ none }}{% endif %}"
+      value_template: "{% set g = value_json.get('Growatt', {}) %}{% set out = g.get('Output', {}).get('Power') %}{% set ac = g.get('Grid', {}).get('ACChargePower') %}{% if out is number and ac is number %}{{ ((out if g.get('StatusCode') in [8, 9, 10, 11] else 0) + ac) | round(0) | int }}{% else %}{{ none }}{% endif %}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV3/LWT"
@@ -2361,7 +2361,7 @@ mqtt:
       unique_id: growatt_3_inverter_temperature
       default_entity_id: sensor.growatt_3_inverter_temperature
       state_topic: "tele/growatt_INV3/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Inverter', {}).get('Temperature') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Inverter', {}).get('Temperature') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV3/LWT"
@@ -2384,7 +2384,7 @@ mqtt:
       unique_id: growatt_3_dcdc_temperature
       default_entity_id: sensor.growatt_3_dcdc_temperature
       state_topic: "tele/growatt_INV3/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Inverter', {}).get('DCDCTemperature') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Inverter', {}).get('DCDCTemperature') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV3/LWT"
@@ -2407,7 +2407,7 @@ mqtt:
       unique_id: growatt_3_bus_voltage
       default_entity_id: sensor.growatt_3_bus_voltage
       state_topic: "tele/growatt_INV3/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Inverter', {}).get('BusVoltage') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Inverter', {}).get('BusVoltage') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV3/LWT"
@@ -2468,7 +2468,7 @@ mqtt:
       unique_id: growatt_3_pv_energy_today
       default_entity_id: sensor.growatt_3_pv_energy_today
       state_topic: "tele/growatt_INV3/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Energy', {}).get('PVToday') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Energy', {}).get('PVToday') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV3/LWT"
@@ -2491,7 +2491,7 @@ mqtt:
       unique_id: growatt_3_pv_energy_total
       default_entity_id: sensor.growatt_3_pv_energy_total
       state_topic: "tele/growatt_INV3/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Energy', {}).get('PVTotal') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Energy', {}).get('PVTotal') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV3/LWT"
@@ -2514,7 +2514,7 @@ mqtt:
       unique_id: growatt_3_op_discharge_energy_today
       default_entity_id: sensor.growatt_3_op_discharge_energy_today
       state_topic: "tele/growatt_INV3/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Energy', {}).get('LoadToday') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Energy', {}).get('LoadToday') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV3/LWT"
@@ -2537,7 +2537,7 @@ mqtt:
       unique_id: growatt_3_op_discharge_energy_total
       default_entity_id: sensor.growatt_3_op_discharge_energy_total
       state_topic: "tele/growatt_INV3/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Energy', {}).get('LoadTotal') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Energy', {}).get('LoadTotal') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV3/LWT"
@@ -2560,7 +2560,7 @@ mqtt:
       unique_id: growatt_3_battery_discharge_energy_today
       default_entity_id: sensor.growatt_3_battery_discharge_energy_today
       state_topic: "tele/growatt_INV3/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Energy', {}).get('DischargeToday') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Energy', {}).get('DischargeToday') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV3/LWT"
@@ -2583,7 +2583,7 @@ mqtt:
       unique_id: growatt_3_battery_discharge_energy_total
       default_entity_id: sensor.growatt_3_battery_discharge_energy_total
       state_topic: "tele/growatt_INV3/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Energy', {}).get('DischargeTotal') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Energy', {}).get('DischargeTotal') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV3/LWT"
@@ -2606,7 +2606,7 @@ mqtt:
       unique_id: growatt_3_ac_charge_energy_today
       default_entity_id: sensor.growatt_3_ac_charge_energy_today
       state_topic: "tele/growatt_INV3/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Energy', {}).get('ACChargeToday') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Energy', {}).get('ACChargeToday') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV3/LWT"
@@ -2629,7 +2629,7 @@ mqtt:
       unique_id: growatt_3_ac_charge_energy_total
       default_entity_id: sensor.growatt_3_ac_charge_energy_total
       state_topic: "tele/growatt_INV3/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Energy', {}).get('ACChargeTotal') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Energy', {}).get('ACChargeTotal') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV3/LWT"
@@ -2652,7 +2652,7 @@ mqtt:
       unique_id: growatt_3_ac_discharge_energy_today
       default_entity_id: sensor.growatt_3_ac_discharge_energy_today
       state_topic: "tele/growatt_INV3/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Energy', {}).get('ACDischargeToday') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Energy', {}).get('ACDischargeToday') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV3/LWT"
@@ -2675,7 +2675,7 @@ mqtt:
       unique_id: growatt_3_ac_discharge_energy_total
       default_entity_id: sensor.growatt_3_ac_discharge_energy_total
       state_topic: "tele/growatt_INV3/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Energy', {}).get('ACDischargeTotal') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Energy', {}).get('ACDischargeTotal') %}{{ (v) | round(1) if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV3/LWT"
@@ -2755,7 +2755,7 @@ mqtt:
       unique_id: growatt_3_max_charge_current
       default_entity_id: sensor.growatt_3_max_charge_current
       state_topic: "tele/growatt_INV3/SENSOR"
-      value_template: "{{ value_json.get('Growatt', {}).get('Settings', {}).get('MaxChargeCurrent') }}"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Settings', {}).get('MaxChargeCurrent') %}{{ (v) | round(0) | int if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV3/LWT"
