@@ -175,19 +175,21 @@ Nu folosim un *blueprint* Home Assistant: blueprint-urile pentru template creeaz
 ### Dashboard
 
 <p><img src="img/dashboard-3.png" width="640" alt="Dashboard, trei invertoare">
+<img src="img/dashboard-1-grid.png" width="640" alt="Dashboard, un invertor cu rețea">
 <img src="img/dashboard-1.png" width="640" alt="Dashboard, un invertor off-grid"></p>
 
-Două pagini gata făcute, cu același design:
+Trei pagini gata făcute, cu același design:
 
 | Fișier | Pentru |
 | --- | --- |
 | [`homeassistant/dashboard/solar-3-inverters.html`](../homeassistant/dashboard/solar-3-inverters.html) | trei invertoare cu rețea (flux de energie cu rețea, card pentru fiecare invertor) |
+| [`homeassistant/dashboard/solar-1-inverter-grid.html`](../homeassistant/dashboard/solar-1-inverter-grid.html) | un invertor cu rețea |
 | [`homeassistant/dashboard/solar-1-inverter.html`](../homeassistant/dashboard/solar-1-inverter.html) | un invertor off-grid (fără rețea) |
 
 1. Copiezi fișierul în `<config>/www/` (de exemplu cu add-on-ul File editor sau Samba).
 2. **Settings → Dashboards → Add dashboard → New dashboard from scratch** și îi dai un nume.
 3. Îl deschizi, **⋮ → Edit dashboard**, editezi vederea: **View type: Panel (single card)**.
-4. Adaugi un card **Webpage** cu adresa `/local/solar-3-inverters.html` (sau `solar-1-inverter.html`).
+4. Adaugi un card **Webpage** cu adresa `/local/solar-3-inverters.html` (sau `solar-1-inverter-grid.html`, `solar-1-inverter.html`).
 
 Pagina citește senzorii direct din Home Assistant: fluxul de energie live, totalurile de azi, timpul până la baterie goală sau plină, câte un card pentru fiecare invertor și un grafic pe zi, 24 h, 48 h sau lună, cu economiile în RON. Setările sunt în blocul `CONFIG` de la începutul fișierului: titlu, număr de invertoare, cu rețea sau off-grid, prețul energiei. Plăcuțele cu prognoza solară folosesc integrarea **Forecast.Solar**; fără ea, arată „–”.
 

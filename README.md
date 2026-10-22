@@ -29,13 +29,19 @@ A ready dashboard page shows the whole system at a glance. It reads the sensors 
 - **One card per inverter**: output power and load bar, PV1/PV2, battery, SOC, grid, output voltage, temperature, today's PV and the inverter status (for example "PV + bypass").
 - **Power over time**: day, 24 h, 48 h or month; solar, load, battery and grid curves with the solar forecast as a dashed line; tiles with real production, consumption, forecast and savings. The month view shows daily bars in kWh or RON.
 
+### One inverter with grid
+
+<img src="docs/img/dashboard-1-grid.png" width="820" alt="Dashboard for one Growatt inverter with grid">
+
+`homeassistant/dashboard/solar-1-inverter-grid.html`, for a single inverter connected to the grid: the same layout as the three-inverter page, with the grid node, grid tiles and grid curve, and one wide inverter card.
+
 ### One off-grid inverter
 
 <img src="docs/img/dashboard-1.png" width="820" alt="Dashboard for one off-grid Growatt inverter">
 
-`homeassistant/dashboard/solar-1-inverter.html`, for a single inverter without grid (a cabin, for example): the same page without the grid node, grid tiles and grid curve, and one wide inverter card.
+`homeassistant/dashboard/solar-1-inverter.html`, for a single inverter without grid (a cabin, for example): the same page as above, but without the grid node, grid tiles and grid curve, and one wide inverter card.
 
-Both pages are set in the `CONFIG` block at the top of the file (title, number of inverters, grid or off-grid, energy price). The forecast tiles need the Forecast.Solar integration. The screenshots show sample data.
+All three pages are set in the `CONFIG` block at the top of the file (title, number of inverters, grid or off-grid, energy price). The forecast tiles need the Forecast.Solar integration. The screenshots show sample data.
 
 ## Hardware
 
@@ -68,7 +74,7 @@ Full instructions: **[docs/GUIDE.en.md](docs/GUIDE.en.md)**.
 | `.github/workflows/build.yml` | tests the driver, builds the firmware, publishes it |
 | `tests/` | runs the driver against a simulated inverter |
 | `homeassistant/packages/` | Home Assistant sensors for 1 or 3 inverters, plus summary helpers |
-| `homeassistant/dashboard/` | Home Assistant dashboard pages (1 inverter off-grid, 3 inverters with grid) |
+| `homeassistant/dashboard/` | Home Assistant dashboard pages (1 inverter off-grid, 1 inverter with grid, 3 inverters with grid) |
 | `tools/ha_package.py` | generates the Home Assistant package for any number of inverters |
 | `docs/` | guide (English, Romanian) and register reference |
 

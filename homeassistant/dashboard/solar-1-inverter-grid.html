@@ -1,0 +1,680 @@
+<!doctype html>
+<!--
+  DongleGrowatt - Home Assistant solar dashboard (1 inverter, with grid)
+  Original design and code: Andrei Cristetiu. Adapted for DongleGrowatt by Barbu Dan-Cristian.
+  License: GPL-3.0-or-later (see LICENSE and NOTICE in the repository).
+  Install: see docs/GUIDE.en.md / docs/GHID.ro.md, section "Home Assistant dashboard".
+-->
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Sistem solar</title>
+<style>
+:root{
+  --bg1:#0a1226;--bg2:#12224a;--card:rgba(255,255,255,.06);--card-b:rgba(255,255,255,.09);
+  --tx:#eaf0ff;--mut:#8fa0c8;
+  --pv:#ffb02e;--bat:#35d07f;--load:#4aa3ff;--grid:#b284ff;--bad:#ff5d6c;
+}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{font-family:Inter,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--tx);
+  background:radial-gradient(1200px 700px at 70% -10%,#1c3a7a 0%,transparent 60%),linear-gradient(160deg,var(--bg1),var(--bg2));
+  background-attachment:fixed;padding:16px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1200px;margin:0 auto}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+h1{font-size:20px;font-weight:600;letter-spacing:.2px;display:flex;align-items:center;gap:10px}
+h1 i{width:10px;height:10px;border-radius:50%;background:var(--bat);box-shadow:0 0 0 4px rgba(53,208,127,.2)}
+h1 i.off{background:var(--bad);box-shadow:0 0 0 4px rgba(255,93,108,.2)}
+.clock{color:var(--mut);font-size:14px;font-variant-numeric:tabular-nums}
+.alert{display:none;background:rgba(255,93,108,.15);border:1px solid rgba(255,93,108,.5);color:#ffd0d5;padding:10px 14px;border-radius:12px;margin-bottom:14px;font-size:14px}
+.card{background:var(--card);border:1px solid var(--card-b);border-radius:20px;padding:16px;backdrop-filter:blur(8px)}
+.title{font-size:13px;color:var(--mut);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.top{display:grid;grid-template-columns:1.6fr 1fr;gap:14px;margin-bottom:14px}
+@media(max-width:900px){.top{grid-template-columns:1fr}}
+svg.flow{width:100%;height:auto;display:block}
+.flowcard{position:relative}
+.sav{position:absolute;left:14px;top:14px;z-index:2;min-width:190px;padding:10px 14px 11px;border-radius:16px;
+  background:linear-gradient(135deg,rgba(53,208,127,.22),rgba(53,208,127,.05));border:1px solid rgba(53,208,127,.45);
+  box-shadow:0 6px 24px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.08);backdrop-filter:blur(10px)}
+.sav .sk{font-size:11px;letter-spacing:.9px;text-transform:uppercase;color:#9fe8be}
+.sav .sv{font-size:26px;font-weight:800;line-height:1.15;margin:2px 0 6px;font-variant-numeric:tabular-nums;color:#e9fff3}
+.sav .sv.neg{color:#ffb3bb}
+.sav .srow{display:flex;gap:16px;border-top:1px solid rgba(255,255,255,.12);padding-top:6px}
+.sav .srow span{display:block;font-size:10.5px;color:#9fd9b8;text-transform:uppercase;letter-spacing:.6px}
+.sav .srow b{font-size:14px;font-variant-numeric:tabular-nums;color:#e9fff3}
+.sav .srow b.neg{color:#ffb3bb}
+@media(max-width:700px){.sav{position:static;margin-bottom:10px}}
+.node-bg{fill:#0f1b3b;stroke-width:3}
+.val{font-size:22px;font-weight:700;fill:var(--tx);text-anchor:middle;font-variant-numeric:tabular-nums}
+.lbl{font-size:13px;fill:var(--mut);text-anchor:middle}
+.sub{font-size:12px;fill:var(--mut);text-anchor:middle}
+.line{fill:none;stroke-width:4;stroke-linecap:round;stroke-dasharray:.1 14;opacity:.12}
+.line.on{opacity:1;animation:flow 1s linear infinite}
+.line.rev{animation-direction:reverse}
+.base{fill:none;stroke-width:2;opacity:.12}
+@keyframes flow{to{stroke-dashoffset:-28.2}}
+.sum{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:rgba(255,255,255,.05);border-radius:14px;padding:12px}
+.stat .k{font-size:12px;color:var(--mut)}
+.stat .v{font-size:22px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums}
+.stat .v small{font-size:13px;color:var(--mut);font-weight:500;margin-left:3px}
+.stat.pos{background:rgba(53,208,127,.1)}.stat.pos .v{color:#8ff0bb}
+.stat.cost{background:rgba(255,93,108,.1)}.stat.cost .v{color:#ff9aa5}
+.stat.neg .v{color:#ff9aa5}
+.bar{height:8px;border-radius:6px;background:rgba(255,255,255,.1);overflow:hidden;margin-top:8px}
+.bar>i{display:block;height:100%;border-radius:6px;background:var(--load);transition:width .6s}
+.invs{display:grid;grid-template-columns:repeat(var(--ninv,3),1fr);gap:14px;margin-bottom:14px}
+@media(max-width:900px){.invs{grid-template-columns:1fr}}
+.inv h3{font-size:16px;font-weight:600;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.pill{font-size:12px;font-weight:600;padding:4px 10px;border-radius:20px;background:rgba(74,163,255,.18);color:#9ccbff}
+.pill.g{background:rgba(53,208,127,.18);color:#8ff0bb}
+.pill.o{background:rgba(255,176,46,.18);color:#ffd48a}
+.pill.r{background:rgba(255,93,108,.2);color:#ffb3bb}
+.rows{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;margin-top:12px;font-size:13px}
+.rows div{display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.06);padding-bottom:5px}
+.rows span:first-child{color:var(--mut)}
+.rows span:last-child{font-variant-numeric:tabular-nums}
+.big{font-size:30px;font-weight:700;font-variant-numeric:tabular-nums}
+.big small{font-size:14px;color:var(--mut);font-weight:500}
+.tabs{display:flex;gap:6px;align-items:center}
+.tabs button,.dn button{background:rgba(255,255,255,.07);border:0;color:var(--mut);padding:6px 12px;border-radius:10px;font-size:12px;cursor:pointer}
+.tabs button.act{background:#2c4a94;color:#fff}
+.dn{display:flex;gap:6px;align-items:center}
+.dn button:disabled{opacity:.3;cursor:default}
+.dn .d{min-width:170px;text-align:center;font-size:13px;color:var(--tx);text-transform:none;letter-spacing:0;font-weight:600}
+.fc{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:8px;margin:4px 0 8px}
+.fc .stat{padding:9px 11px}
+.fc .stat .v{font-size:17px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin:6px 0 4px;font-size:13px}
+.legend span{cursor:pointer;display:flex;align-items:center;gap:6px;user-select:none}
+.legend span i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.legend span.off{opacity:.35}
+#chart{position:relative}
+#tip{position:absolute;pointer-events:none;background:#0b1430ee;border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:8px 10px;font-size:12px;display:none;white-space:nowrap;z-index:3}
+.msg{padding:40px;text-align:center;color:var(--mut)}
+.note{font-size:11px;color:var(--mut);margin-top:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><i id="dot"></i><span id="ttl">Sistem solar</span></h1>
+    <div class="clock" id="clock"></div>
+  </header>
+  <div class="alert" id="alert"></div>
+
+  <div class="top">
+    <div class="card flowcard">
+      <div class="sav" id="sav"></div>
+      <svg class="flow" viewBox="0 -40 800 480" id="flow">
+        <path class="base" stroke="#ffb02e" d="M400 62 L400 220"/>
+        <path class="base gridel" stroke="#b284ff" d="M110 220 L400 220"/>
+        <path class="base" stroke="#4aa3ff" d="M400 220 L690 220"/>
+        <path class="base" stroke="#35d07f" d="M400 378 L400 220"/>
+        <path class="line" id="l_pv" stroke="#ffb02e" d="M400 62 L400 220"/>
+        <path class="line gridel" id="l_grid" stroke="#b284ff" d="M110 220 L400 220"/>
+        <path class="line" id="l_load" stroke="#4aa3ff" d="M400 220 L690 220"/>
+        <path class="line" id="l_bat" stroke="#35d07f" d="M400 378 L400 220"/>
+
+        <rect x="350" y="190" width="100" height="60" rx="14" fill="#16295a" stroke="#4a6fd0" stroke-width="2"/>
+        <text x="400" y="216" class="lbl" style="fill:#cfe0ff;font-weight:600" id="invname">SPF</text>
+        <text x="400" y="236" class="sub" id="invtot">–</text>
+
+        <circle class="node-bg" cx="400" cy="62" r="52" stroke="#ffb02e"/>
+        <g transform="translate(400,40)" stroke="#ffb02e" stroke-width="2.5" stroke-linecap="round" fill="none">
+          <circle r="6" fill="#ffb02e"/>
+          <path d="M0-12V-16M0 12V16M-12 0H-16M12 0H16M-8.5-8.5L-11-11M8.5-8.5L11-11M-8.5 8.5L-11 11M8.5 8.5L11 11"/>
+        </g>
+        <text x="400" y="78" class="val" id="v_pv">–</text>
+        <text x="468" y="52" class="lbl" style="text-anchor:start">Solar</text>
+        <text x="468" y="72" class="sub" style="text-anchor:start" id="s_pv"></text>
+
+        <g class="gridel"><circle class="node-bg" cx="110" cy="220" r="52" stroke="#b284ff"/>
+        <g transform="translate(110,198)" stroke="#b284ff" stroke-width="2.5" stroke-linecap="round" fill="none">
+          <path d="M0-14L-10 14M0-14L10 14M-6 0H6M-8 8H8M-13-6H13"/>
+        </g>
+        <text x="110" y="236" class="val" id="v_grid">–</text>
+        <text x="110" y="292" class="lbl">Rețea</text>
+        <text x="110" y="310" class="sub" id="s_grid"></text></g>
+
+        <circle class="node-bg" cx="690" cy="220" r="52" stroke="#4aa3ff"/>
+        <g transform="translate(690,198)" stroke="#4aa3ff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+          <path d="M-14 2L0-12L14 2M-9 0V13H9V0"/>
+        </g>
+        <text x="690" y="236" class="val" id="v_load">–</text>
+        <text x="690" y="292" class="lbl">Consum casă</text>
+        <text x="690" y="310" class="sub" id="s_load"></text>
+
+        <circle cx="400" cy="378" r="52" fill="#0f1b3b" stroke="rgba(255,255,255,.1)" stroke-width="6"/>
+        <circle id="soc" cx="400" cy="378" r="52" fill="none" stroke="#35d07f" stroke-width="6" stroke-linecap="round"
+                stroke-dasharray="0 400" transform="rotate(-90 400 378)"/>
+        <g transform="translate(400,356)" stroke="#35d07f" stroke-width="2.5" fill="none" stroke-linejoin="round">
+          <rect x="-11" y="-7" width="22" height="14" rx="2.5"/><rect x="11" y="-3" width="3.5" height="6" rx="1" fill="#35d07f"/>
+          <rect id="batfill" x="-8.5" y="-4.5" width="0" height="9" fill="#35d07f" stroke="none"/>
+        </g>
+        <text x="400" y="386" class="val" id="v_bat">–</text>
+        <text x="400" y="402" class="sub" id="v_soc" style="font-weight:600;fill:#8ff0bb"></text>
+        <text x="468" y="372" class="lbl" style="text-anchor:start">Baterie</text>
+        <text x="468" y="392" class="sub" style="text-anchor:start" id="s_bat"></text>
+      </svg>
+    </div>
+
+    <div class="card">
+      <div class="title"><span>Azi</span><span id="todaydate"></span></div>
+      <div class="sum">
+        <div class="stat"><div class="k">☀ Producție</div><div class="v" id="t_pv">–<small>kWh</small></div></div>
+        <div class="stat"><div class="k">🏠 Consum</div><div class="v" id="t_load">–<small>kWh</small></div></div>
+        <div class="stat"><div class="k">🔋 Baterie descărcată</div><div class="v" id="t_bat">–<small>kWh</small></div></div>
+        <div class="stat gridel"><div class="k">⚡ Încărcare din rețea</div><div class="v" id="t_ac">–<small>kWh</small></div></div>
+      </div>
+      <div class="title" style="margin-top:18px">Baterie</div>
+      <div class="stat">
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <span class="big" id="b_soc">–<small>%</small></span>
+          <span class="pill" id="b_state">–</span>
+        </div>
+        <div class="bar"><i id="b_bar" style="width:0;background:var(--bat)"></i></div>
+        <div class="rows" style="margin-top:12px">
+          <div><span>Putere</span><span id="b_pow">–</span></div>
+          <div><span>Tensiune</span><span id="b_v">–</span></div>
+          <div><span>Timp rămas</span><span id="b_eta">–</span></div>
+          <div><span>Estimare</span><span id="b_etat">–</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="invs" id="invs"></div>
+
+  <div class="card">
+    <div class="title"><span>Putere în timp</span>
+      <div class="dn" id="dn"><button id="prev">◀</button><span class="d" id="dlabel">–</span><button id="next">▶</button><button id="today">Azi</button></div>
+      <div class="tabs" id="tabs"><button data-m="day" class="act">Zi</button><button data-m="24">24h</button><button data-m="48">48h</button><button data-m="month">Lună</button></div>
+    </div>
+    <div class="fc" id="fc"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+      <div class="legend" id="legend"></div>
+      <div class="tabs" id="vtabs" style="display:none"><button data-v="kwh" class="act">kWh</button><button data-v="ron">RON</button></div>
+    </div>
+    <div id="chart"><div id="tip"></div><svg id="csvg" style="width:100%;display:block"></svg></div>
+    <div class="note" id="note"></div>
+  </div>
+</div>
+
+<script>
+/* ===================== CONFIGURARE ===================== */
+const CONFIG = {
+  title: 'Sistem solar',     // titlul paginii
+  inverters: 1,              // numarul de invertoare (sensor.growatt_1_..., growatt_2_..., ...)
+  hasGrid: true,             // false = sistem off-grid: ascunde reteaua
+  price: 1.11               // pret energie, RON / kWh (pentru economii)
+};
+/* ======================================================== */
+const PRICE=CONFIG.price; /* RON / kWh */
+const E = {
+  pv:'sensor.productie_solara_totala', load:'sensor.consum_casa_total', grid:'sensor.retea_putere_totala',
+  bat:'sensor.baterie_putere_neta', soc:'sensor.baterie_soc_mediu',
+  etaEmpty:'sensor.baterie_timp_pana_goala', etaFull:'sensor.baterie_timp_pana_plina',
+  etaEmptyT:'sensor.baterie_eta_goala', etaFullT:'sensor.baterie_eta_plina',
+  fcToday:'sensor.energy_production_today', fcTomorrow:'sensor.energy_production_tomorrow',
+  fcNext:'sensor.energy_next_hour', fcRemain:'sensor.energy_production_today_remaining',
+  fcPeak:'sensor.power_highest_peak_time_today'
+};
+/* Conventie baterie in interfata: + = descarcare (acopera consumul), - = incarcare. Senzorul brut are semn invers. */
+const BATSIGN=-1;
+const $=id=>document.getElementById(id);
+const sgn=v=>(v>0?'+':v<0?'−':'');
+const INV=Array.from({length:CONFIG.inverters},(_,i)=>i+1);
+document.documentElement.style.setProperty('--ninv',CONFIG.inverters);
+document.title=CONFIG.title;
+$('ttl').textContent=CONFIG.title;
+$('invname').textContent=(CONFIG.inverters>1?CONFIG.inverters+' × ':'')+'SPF';
+if(!CONFIG.hasGrid)document.querySelectorAll('.gridel').forEach(e=>e.style.display='none');
+const STATUS={0:['Standby',''],1:['Inactiv',''],2:['Pe baterie','g'],3:['Defect','r'],4:['Flash',''],5:['PV încarcă','o'],6:['AC încarcă','o'],7:['Încărcare combinată','o'],8:['Combinat + bypass','o'],9:['PV + bypass','o'],10:['AC + bypass','o'],11:['Bypass','o'],12:['PV încarcă + descarcă','g']};
+let hass=null;
+function getHass(){
+  try{const ha=window.parent.document.querySelector('home-assistant');return ha&&ha.hass||null}catch(e){return null}
+}
+const st=id=>hass&&hass.states[id];
+const num=id=>{const s=st(id);if(!s)return NaN;const v=parseFloat(s.state);return isFinite(v)?v:NaN};
+const nz=v=>isFinite(v)?v:0;
+function fmtW(v){if(!isFinite(v))return '–';const a=Math.abs(v);return a>=1000?(v/1000).toFixed(2)+' kW':Math.round(v)+' W'}
+function fmtH(h){if(!isFinite(h))return '–';const m=Math.round(h*60);return Math.floor(m/60)+' h '+String(m%60).padStart(2,'0')+' min'}
+function k1(v){return isFinite(v)?v.toFixed(1):'–'}
+function sum(ids){let t=0,ok=false;for(const i of ids){const v=num(i);if(isFinite(v)){t+=v;ok=true}}return ok?t:NaN}
+const hm=t=>new Date(t).toLocaleTimeString('ro-RO',{hour:'2-digit',minute:'2-digit'});
+const ron=v=>isFinite(v)?(v<0?'−':'')+Math.abs(v).toFixed(2)+' RON':'–';
+const ronN=v=>isFinite(v)?(v<0?'−':'')+Math.abs(v).toFixed(2):'–';
+
+$('invs').innerHTML=INV.map(n=>`
+ <div class="card inv">
+  <h3><span>Invertor ${n}</span><span class="pill" id="i${n}_st">–</span></h3>
+  <div class="big" id="i${n}_out">–</div>
+  <div class="bar"><i id="i${n}_bar" style="width:0"></i></div>
+  <div class="rows">
+    <div><span>Sarcină</span><span id="i${n}_lp">–</span></div>
+    <div><span>PV total</span><span id="i${n}_pv">–</span></div>
+    <div><span>PV1</span><span id="i${n}_pv1">–</span></div>
+    <div><span>PV2</span><span id="i${n}_pv2">–</span></div>
+    <div><span>Baterie</span><span id="i${n}_bat">–</span></div>
+    <div><span>SOC</span><span id="i${n}_soc">–</span></div>
+    <div class="gridel"><span>Rețea</span><span id="i${n}_gv">–</span></div>
+    <div><span>Ieșire</span><span id="i${n}_ov">–</span></div>
+    <div><span>Temp. invertor</span><span id="i${n}_t">–</span></div>
+    <div><span>Azi PV</span><span id="i${n}_e">–</span></div>
+  </div>
+ </div>`).join('');
+if(!CONFIG.hasGrid)document.querySelectorAll('#invs .gridel').forEach(e=>e.style.display='none');
+
+function setFlow(id,power,towardCenterWhenPositive,rev){
+  const el=$(id);const on=Math.abs(power)>10;
+  el.classList.toggle('on',on);
+  const reverse=on&&(power>0?!towardCenterWhenPositive:towardCenterWhenPositive);
+  el.classList.toggle('rev',rev!==undefined?(on&&rev):reverse);
+  if(on){const d=Math.max(.55,2.4-Math.abs(power)/3500*1.9);el.style.animationDuration=d.toFixed(2)+'s'}
+}
+
+/* ---------- economii ----------
+   Model: energia consumata din PV sau baterie = op_discharge - ac_discharge (ac_discharge = bypass din retea).
+   Cost retea = ac_charge (retea -> baterie) + ac_discharge (retea -> casa).
+   Net = ce ai fi platit fara sistem - ce platesti acum = op - ac_discharge - ac_charge. */
+function fromE(op,acd,acc){return {op,acd,acc,saved:op-acd,grid:acc+acd,net:op-acd-acc}}
+function live(kind){
+  const s=k=>sum(INV.map(n=>`sensor.growatt_${n}_${k}_energy_${kind}`));
+  return fromE(s('op_discharge'),s('ac_discharge'),s('ac_charge'));
+}
+async function stats(start,end){
+  const keys=['op_discharge','ac_discharge','ac_charge','battery_discharge','pv'];
+  const ids=INV.flatMap(n=>keys.map(k=>`sensor.growatt_${n}_${k}_energy_total`));
+  const r=await hass.callWS({type:'recorder/statistics_during_period',start_time:new Date(start).toISOString(),end_time:new Date(end).toISOString(),statistic_ids:ids,period:'day',types:['change']});
+  const days={};
+  for(const id of ids){
+    const k=id.match(/growatt_\d_(.+)_energy_total/)[1];
+    for(const row of (r[id]||[])){
+      const t=typeof row.start==='number'?row.start:Date.parse(row.start);
+      const d=days[t]||(days[t]={op_discharge:0,ac_discharge:0,ac_charge:0,battery_discharge:0,pv:0});
+      d[k]+=row.change||0;
+    }
+  }
+  return days;
+}
+let monthBase=null,monthBaseAt=0;
+async function loadMonthBase(){
+  if(!hass||Date.now()-monthBaseAt<300e3)return;monthBaseAt=Date.now();
+  const now=new Date(),ms=new Date(now.getFullYear(),now.getMonth(),1).getTime();
+  const tm=new Date();tm.setHours(0,0,0,0);
+  if(tm.getTime()<=ms){monthBase={op:0,acd:0,acc:0};return}
+  try{
+    const d=await stats(ms,tm.getTime());let op=0,acd=0,acc=0;
+    for(const k in d){op+=d[k].op_discharge;acd+=d[k].ac_discharge;acc+=d[k].ac_charge}
+    monthBase={op,acd,acc};
+  }catch(e){console.error(e);monthBaseAt=0}
+}
+function updateSav(){
+  const T=live('total'),D=live('today'),mb=monthBase;
+  const M=mb?fromE(mb.op+nz(D.op),mb.acd+nz(D.acd),mb.acc+nz(D.acc)):null;
+  const cl=v=>v<0?'neg':'';
+  $('sav').innerHTML=`<div class="sk">Economie totală</div><div class="sv ${cl(T.net)}">${ron(T.net*PRICE)}</div>`+
+   `<div class="srow"><div><span>Luna</span><b class="${cl(M&&M.net)}">${M?ron(M.net*PRICE):'–'}</b></div><div><span>Azi</span><b class="${cl(D.net)}">${ron(D.net*PRICE)}</b></div></div>`;
+}
+
+function update(){
+  hass=getHass();
+  if(!hass){$('dot').className='off';return}
+  $('dot').className=hass.connected===false?'off':'';
+  const pv=num(E.pv),load=num(E.load),grid=num(E.grid),raw=num(E.bat),soc=num(E.soc);
+  const bat=raw*BATSIGN;
+  $('v_pv').textContent=fmtW(pv);
+  $('v_load').textContent=fmtW(load);
+  $('v_grid').textContent=fmtW(Math.abs(grid));
+  $('v_bat').textContent=isFinite(bat)?sgn(Math.round(bat))+fmtW(Math.abs(bat)):'–';
+  $('s_grid').textContent=grid>10?'import':grid<-10?'export':'inactiv';
+  $('s_pv').textContent=pv>10?'produce':'fără producție';
+  $('invtot').textContent=fmtW(sum(INV.map(n=>`sensor.growatt_${n}_output_power`)));
+  const dis=bat>10,chg=bat<-10;
+  $('v_soc').textContent=isFinite(soc)?Math.round(soc)+'%':'';
+  $('soc').setAttribute('stroke-dasharray',(isFinite(soc)?soc/100*326.7:0)+' 400');
+  $('soc').setAttribute('stroke',soc<20?'#ff5d6c':soc<40?'#ffb02e':'#35d07f');
+  $('batfill').setAttribute('width',(isFinite(soc)?soc/100*17:0));
+  $('s_bat').textContent=chg?'se încarcă':dis?'acoperă consumul':'repaus';
+  setFlow('l_pv',pv,true);
+  setFlow('l_load',load,false,false);
+  setFlow('l_grid',grid,true);
+  setFlow('l_bat',bat,true);
+  $('b_soc').innerHTML=(isFinite(soc)?Math.round(soc):'–')+'<small>%</small>';
+  $('b_bar').style.width=(isFinite(soc)?soc:0)+'%';
+  $('b_bar').style.background=soc<20?'var(--bad)':soc<40?'var(--pv)':'var(--bat)';
+  const bp=$('b_state');bp.textContent=chg?'Încărcare':dis?'Descarcă (acoperă consum)':'Repaus';bp.className='pill '+(chg?'g':dis?'o':'');
+  $('b_pow').textContent=isFinite(bat)?sgn(Math.round(bat))+fmtW(Math.abs(bat)):'–';
+  const bv=INV.map(n=>num(`sensor.growatt_${n}_battery_voltage`)).filter(isFinite);
+  $('b_v').textContent=bv.length?(bv.reduce((a,b)=>a+b,0)/bv.length).toFixed(1)+' V':'–';
+  const eta=dis?num(E.etaEmpty):chg?num(E.etaFull):NaN;
+  $('b_eta').textContent=fmtH(eta);
+  const etat=dis?st(E.etaEmptyT):chg?st(E.etaFullT):null;
+  $('b_etat').textContent=etat&&etat.state&&etat.state!=='unknown'&&etat.state!=='unavailable'?hm(etat.state):'–';
+  const T=(a)=>sum(INV.flatMap(n=>a.map(s=>`sensor.growatt_${n}_${s}`)));
+  $('t_pv').innerHTML=k1(T(['pv_energy_today']))+'<small>kWh</small>';
+  $('t_load').innerHTML=k1(T(['op_discharge_energy_today']))+'<small>kWh</small>';
+  $('t_bat').innerHTML=k1(T(['battery_discharge_energy_today']))+'<small>kWh</small>';
+  $('t_ac').innerHTML=k1(T(['ac_charge_energy_today']))+'<small>kWh</small>';
+  $('todaydate').textContent=new Date().toLocaleDateString('ro-RO',{weekday:'long',day:'numeric',month:'long'});
+  let alerts=[];
+  for(const n of INV){
+    const p=x=>`sensor.growatt_${n}_${x}`;
+    const out=num(p('output_power')),lp=num(p('load_percentage'));
+    $(`i${n}_out`).innerHTML=Math.round(nz(out))+'<small> W</small>';
+    $(`i${n}_bar`).style.width=Math.min(100,nz(lp))+'%';
+    $(`i${n}_bar`).style.background=lp>85?'var(--bad)':lp>60?'var(--pv)':'var(--load)';
+    $(`i${n}_lp`).textContent=k1(lp)+' %';
+    const p1=num(p('pv1_power')),p2=num(p('pv2_power'));
+    $(`i${n}_pv`).textContent=fmtW(nz(p1)+nz(p2));
+    $(`i${n}_pv1`).textContent=fmtW(p1)+' · '+k1(num(p('pv1_voltage')))+' V';
+    $(`i${n}_pv2`).textContent=fmtW(p2)+' · '+k1(num(p('pv2_voltage')))+' V';
+    const bpw=num(p('battery_power'));
+    $(`i${n}_bat`).textContent=(isFinite(bpw)?sgn(Math.round(bpw))+fmtW(Math.abs(bpw)):'–')+' · '+k1(num(p('battery_voltage')))+' V';
+    $(`i${n}_soc`).textContent=k1(num(p('battery_soc')))+' %';
+    $(`i${n}_gv`).textContent=k1(num(p('grid_voltage')))+' V · '+k1(num(p('grid_frequency')))+' Hz';
+    $(`i${n}_ov`).textContent=k1(num(p('output_voltage')))+' V';
+    $(`i${n}_t`).textContent=k1(num(p('inverter_temperature')))+' °C';
+    $(`i${n}_e`).textContent=k1(num(p('pv_energy_today')))+' kWh';
+    const code=num(p('status'));const s=STATUS[code]||['Cod '+code,''];
+    const pill=$(`i${n}_st`);pill.textContent=s[0];pill.className='pill '+s[1];pill.title='cod '+code;
+    const f=num(p('fault_bit')),w=num(p('warning_bit'));
+    if(f>0)alerts.push(`Invertor ${n}: defect (cod ${f})`);
+    if(w>0)alerts.push(`Invertor ${n}: avertisment (cod ${w})`);
+  }
+  const al=$('alert');al.style.display=alerts.length?'block':'none';al.textContent=alerts.join(' · ');
+  $('clock').textContent=new Date().toLocaleTimeString('ro-RO');
+  updateSav();updateFcTiles();
+}
+setInterval(update,1000);
+
+/* ---------- grafic: zi / 24h / 48h / luna + prognoza ---------- */
+const SER=[
+ {k:'pv',id:E.pv,name:'Solar',c:'#ffb02e',area:true,sign:1},
+ {k:'load',id:E.load,name:'Consum',c:'#4aa3ff',sign:1},
+ {k:'bat',id:E.bat,name:'Baterie (+descărcare / −încărcare)',c:'#35d07f',sign:BATSIGN},
+ ...(CONFIG.hasGrid?[{k:'grid',id:E.grid,name:'Rețea (+import / −export)',c:'#b284ff',sign:1}]:[]),
+ {k:'fc',name:'Prognoză solar',c:'#ffd166',fc:true}
+];
+let mode='day',off=0,moff=0,mview='kwh',mdays=null,daySt=null,data=null,hidden={},loading=false,fcPts=[],fcWh=[],fcAt=0;
+function monthDefs(){
+  return mview==='kwh'
+   ?[{k:'pv',n:'Producție',c:'#ffb02e',f:v=>v.pv},{k:'load',n:'Consum',c:'#4aa3ff',f:v=>v.op},...(CONFIG.hasGrid?[{k:'grid',n:'Din rețea',c:'#b284ff',f:v=>v.acc+v.acd}]:[])]
+   :[{k:'sv',n:'Economie (PV + baterie)',c:'#35d07f',f:v=>(v.op-v.acd)*PRICE},{k:'cost',n:'Cost din rețea',c:'#ff6b6b',f:v=>(v.acc+v.acd)*PRICE},{k:'net',n:'Net',c:'#ffd166',f:v=>(v.op-v.acd-v.acc)*PRICE}];
+}
+function buildLegend(){
+  if(mode==='month'){
+    $('legend').innerHTML=monthDefs().map(s=>`<span style="cursor:default"><i style="background:${s.c}"></i>${s.n}</span>`).join('');
+    return;
+  }
+  $('legend').innerHTML=SER.map(s=>`<span data-k="${s.k}" class="${hidden[s.k]?'off':''}"><i style="background:${s.c};${s.fc?'background:repeating-linear-gradient(90deg,'+s.c+' 0 4px,transparent 4px 7px);height:3px':''}"></i>${s.name}</span>`).join('');
+  $('legend').querySelectorAll('span').forEach(el=>el.onclick=()=>{hidden[el.dataset.k]=!hidden[el.dataset.k];buildLegend();draw()});
+}
+buildLegend();
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{
+  mode=b.dataset.m;if(mode!=='day')off=0;if(mode==='month')moff=0;
+  setTab();loadHist();
+});
+document.querySelectorAll('#vtabs button').forEach(b=>b.onclick=()=>{
+  mview=b.dataset.v;document.querySelectorAll('#vtabs button').forEach(x=>x.classList.toggle('act',x===b));
+  buildLegend();drawMonth();
+});
+$('prev').onclick=()=>{if(mode==='month'){moff=Math.max(-12,moff-1);loadHist()}else{mode='day';off=Math.max(-9,off-1);setTab();loadHist()}};
+$('next').onclick=()=>{if(mode==='month'){moff=Math.min(0,moff+1);loadHist()}else{mode='day';off=Math.min(1,off+1);setTab();loadHist()}};
+$('today').onclick=()=>{mode='day';off=0;setTab();loadHist()};
+function setTab(){
+  document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('act',x.dataset.m===mode));
+  $('vtabs').style.display=mode==='month'?'flex':'none';
+  buildLegend();
+}
+
+function win(){
+  const now=Date.now();
+  if(mode==='day'){
+    const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()+off);
+    const t0=d.getTime(),span=24*3600e3;
+    return {t0,span,end:Math.min(now,t0+span),step:300e3};
+  }
+  const span=+mode*3600e3;return {t0:now-span,span,end:now,step:Math.max(60e3,span/300)};
+}
+async function loadFc(){
+  if(!hass||Date.now()-fcAt<600e3)return;fcAt=Date.now();
+  try{
+    const r=await hass.callWS({type:'energy/solar_forecast'});
+    const all={};
+    for(const k in (r||{}))for(const [ts,wh] of Object.entries(r[k].wh_hours||{}))all[ts]=(all[ts]||0)+wh;
+    const arr=Object.entries(all).map(([ts,wh])=>({t:new Date(ts).getTime(),wh})).sort((a,b)=>a.t-b.t);
+    fcWh=arr;
+    const segs=[];let cur=null,prev=null;
+    for(const p of arr){
+      let dur=prev==null?3600e3:Math.min(p.t-prev,3600e3);
+      if(prev==null||p.t-prev>3600e3){cur=[{t:p.t-dur,w:0}];segs.push(cur)}
+      cur.push({t:p.t-dur/2,w:p.wh/(dur/3600e3)});
+      cur._end=p.t;prev=p.t;
+    }
+    for(const s of segs)s.push({t:s._end,w:0});
+    fcPts=segs;
+    draw();updateFcTiles();
+  }catch(e){console.error(e)}
+}
+async function loadHist(){
+  if(mode==='month')return loadMonth();
+  if(!hass||loading)return;loading=true;
+  try{
+    const w=win(),n=Math.ceil(w.span/w.step)+1,{t0,step,end}=w;
+    const nd={t0,step,n,end,span:w.span,s:{}};
+    const ids=SER.filter(s=>s.id).map(s=>s.id);
+    if(mode==='day'&&off<0){
+      try{const d=await stats(t0,t0+86400e3);const o=Object.values(d)[0];daySt=o?fromE(o.op_discharge,o.ac_discharge,o.ac_charge):null}catch(e){daySt=null}
+    }else daySt=null;
+    let res={};
+    if(end>t0)res=await hass.callWS({type:'history/history_during_period',start_time:new Date(t0).toISOString(),end_time:new Date(end).toISOString(),
+      entity_ids:ids,minimal_response:true,no_attributes:true,significant_changes_only:false});
+    for(const s of SER){
+      if(!s.id)continue;
+      const sm=new Array(n).fill(0),cnt=new Array(n).fill(0);
+      for(const r of (res[s.id]||[])){
+        const v=parseFloat(r.s);if(!isFinite(v))continue;
+        const ts=(r.lu??r.lc)*1000;
+        const i=Math.floor((ts-t0)/step);if(i<0||i>=n)continue;sm[i]+=v*s.sign;cnt[i]++;
+      }
+      let last=null;const arr=[];
+      for(let i=0;i<n;i++){
+        if(t0+i*step>end){arr.push(null);continue}
+        if(cnt[i])last=sm[i]/cnt[i];arr.push(last);
+      }
+      nd.s[s.k]=arr;
+    }
+    data=nd;draw();updateFcTiles();
+  }catch(e){console.error(e)}
+  loading=false;
+}
+async function loadMonth(){
+  if(!hass||loading)return;loading=true;
+  try{
+    const now=new Date();
+    const ms=new Date(now.getFullYear(),now.getMonth()+moff,1),me=new Date(now.getFullYear(),now.getMonth()+moff+1,1);
+    const d=await stats(ms.getTime(),Math.min(me.getTime(),Date.now()+86400e3));
+    const nd=Math.round((me-ms)/86400e3);
+    const tm=new Date();tm.setHours(0,0,0,0);
+    const days=[];
+    for(let i=0;i<nd;i++){
+      const t=new Date(ms.getFullYear(),ms.getMonth(),ms.getDate()+i).getTime();
+      let v=null;
+      if(t===tm.getTime()){
+        const D=live('today');
+        v={pv:sum(INV.map(n=>`sensor.growatt_${n}_pv_energy_today`)),op:D.op,acd:D.acd,acc:D.acc};
+      }else if(t<tm.getTime()){
+        const key=d[t]!==undefined?t:Object.keys(d).find(k=>Math.abs(k-t)<3.6e6);
+        const o=key!==undefined?d[key]:null;
+        if(o)v={pv:o.pv,op:o.op_discharge,acd:o.ac_discharge,acc:o.ac_charge};
+      }
+      days.push({t,v});
+    }
+    mdays=days;buildLegend();drawMonth();updateFcTiles();
+  }catch(e){console.error(e);$('csvg').innerHTML=''}
+  loading=false;
+}
+function fcVal(t){
+  for(const seg of fcPts){
+    if(t<seg[0].t||t>seg[seg.length-1].t)continue;
+    for(let i=1;i<seg.length;i++)if(t<=seg[i].t){const a=seg[i-1],b=seg[i];return a.w+(b.w-a.w)*(t-a.t)/(b.t-a.t||1)}
+  }
+  return null;
+}
+function integ(arr){let s=0;for(const v of arr)if(v!=null)s+=v*data.step/3600e3/1000;return s}
+function updateFcTiles(){
+  if(!hass)return;
+  const el=$('fc');
+  const mk=(k,v,s,c)=>`<div class="stat ${c||''}"><div class="k">${k}</div><div class="v">${v}${s?`<small>${s}</small>`:''}</div></div>`;
+  let h='';
+  if(mode==='month'){
+    const ds=(mdays||[]).filter(d=>d.v);
+    const S=ds.reduce((a,d)=>({op:a.op+nz(d.v.op),acd:a.acd+nz(d.v.acd),acc:a.acc+nz(d.v.acc),pv:a.pv+nz(d.v.pv)}),{op:0,acd:0,acc:0,pv:0});
+    const M=fromE(S.op,S.acd,S.acc);
+    h+=mk('Economie (PV + baterie)',ronN(M.saved*PRICE),'RON','pos');
+    h+=mk('Cost din rețea',ronN(M.grid*PRICE),'RON','cost');
+    h+=mk('Net față de fără sistem',ronN(M.net*PRICE),'RON',M.net<0?'neg':'pos');
+    h+=mk('Producție',k1(S.pv),'kWh');
+    h+=mk('Consum',k1(S.op),'kWh');
+    h+=mk('Net mediu / zi',ds.length?ronN(M.net*PRICE/ds.length):'–','RON');
+    el.innerHTML=h;
+    const ms=new Date(new Date().getFullYear(),new Date().getMonth()+moff,1);
+    $('dlabel').textContent=ms.toLocaleDateString('ro-RO',{month:'long',year:'numeric'});
+    $('prev').disabled=moff<=-12;$('next').disabled=moff>=0;
+    $('note').textContent='Preț energie: '+PRICE.toFixed(2)+' RON/kWh. Net = ce ai plăti fără sistem − ce plătești acum din rețea (inclusiv încărcarea bateriei din rețea).';
+    return;
+  }
+  $('note').textContent=mode==='day'?'Preț energie: '+PRICE.toFixed(2)+' RON/kWh. Net = ce ai plăti fără sistem − ce plătești acum din rețea.':'';
+  const nextWh=num(E.fcNext)*1000;
+  const pk=st(E.fcPeak);
+  if(mode==='day'){
+    const Ed=off===0?live('today'):(off<0?daySt:null);
+    if(Ed&&isFinite(Ed.net)){
+      h+=mk('Economie (PV + baterie)',ronN(Ed.saved*PRICE),'RON','pos');
+      h+=mk('Cost din rețea',ronN(Ed.grid*PRICE),'RON','cost');
+      h+=mk('Net față de fără sistem',ronN(Ed.net*PRICE),'RON',Ed.net<0?'neg':'pos');
+    }
+  }
+  if(data){
+    const wsel=win();
+    const fcDay=fcWh.filter(p=>p.t>wsel.t0&&p.t<=wsel.t0+wsel.span).reduce((a,p)=>a+p.wh,0)/1000;
+    const lbl=mode==='day'?'ziua selectată':mode+'h';
+    h+=mk('Producție reală ('+lbl+')',k1(integ(data.s.pv||[])),'kWh');
+    h+=mk('Consum ('+lbl+')',k1(integ(data.s.load||[])),'kWh');
+    if(mode==='day')h+=mk('Prognoză ('+lbl+')',fcDay>0?k1(fcDay):'–',fcDay>0?'kWh':'');
+  }
+  h+=mk('Următoarea oră (prognoză)',isFinite(nextWh)?Math.round(nextWh):'–',isFinite(nextWh)?'Wh':'');
+  h+=mk('Prognoză azi',k1(num(E.fcToday)),'kWh');
+  h+=mk('Rămas azi',k1(num(E.fcRemain)),'kWh');
+  h+=mk('Prognoză mâine',k1(num(E.fcTomorrow)),'kWh');
+  h+=mk('Vârf azi',pk&&pk.state&&!['unknown','unavailable'].includes(pk.state)?hm(pk.state):'–','');
+  el.innerHTML=h;
+  if(mode==='day'){const w=win();$('dlabel').textContent=new Date(w.t0).toLocaleDateString('ro-RO',{weekday:'long',day:'numeric',month:'long'})}
+  else $('dlabel').textContent='Ultimele '+mode+' ore';
+  $('prev').disabled=mode==='day'&&off<=-9;$('next').disabled=mode!=='day'||off>=1;
+}
+function draw(){
+  if(mode==='month')return drawMonth();
+  if(!data)return;
+  const cont=$('chart'),W=cont.clientWidth||800,H=300,m={l:48,r:12,t:10,b:26};
+  const svg=$('csvg');svg.setAttribute('viewBox',`0 0 ${W} ${H}`);svg.setAttribute('height',H);
+  const vis=SER.filter(s=>!hidden[s.k]);
+  const t1=data.t0+data.span;
+  let lo=0,hi=100;
+  for(const s of vis){
+    if(s.fc){for(const seg of fcPts)for(const p of seg)if(p.t>=data.t0-3600e3&&p.t<=t1+3600e3&&p.w>hi)hi=p.w;continue}
+    for(const v of (data.s[s.k]||[])){if(v==null)continue;if(v<lo)lo=v;if(v>hi)hi=v}
+  }
+  const pad=(hi-lo)*.08;hi+=pad;if(lo<0)lo-=pad;
+  const X=t=>m.l+(W-m.l-m.r)*(t-data.t0)/data.span,Y=v=>m.t+(H-m.t-m.b)*(1-(v-lo)/(hi-lo));
+  let o=`<defs><clipPath id="cp"><rect x="${m.l}" y="0" width="${W-m.l-m.r}" height="${H}"/></clipPath></defs>`;
+  const ticks=5,rng=hi-lo;const stp=Math.pow(10,Math.floor(Math.log10(rng/ticks)));
+  const nice=[1,2,2.5,5,10].map(x=>x*stp).find(x=>rng/x<=ticks+1)||stp*10;
+  for(let v=Math.ceil(lo/nice)*nice;v<=hi;v+=nice){
+    o+=`<line x1="${m.l}" x2="${W-m.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="rgba(255,255,255,${v===0?.25:.07})"/>`;
+    o+=`<text x="${m.l-8}" y="${Y(v)+4}" text-anchor="end" fill="#8fa0c8" font-size="11">${Math.abs(v)>=1000?(v/1000).toFixed(1)+'k':Math.round(v)}</text>`;
+  }
+  const hrs=data.span/3600e3,xt=hrs<=24?(mode==='day'?180:240):480;
+  const tz=-new Date(data.t0).getTimezoneOffset()*60e3;
+  const first=Math.ceil((data.t0+tz)/(xt*60e3))*xt*60e3-tz;
+  for(let t=first;t<=t1;t+=xt*60e3){
+    o+=`<line x1="${X(t)}" x2="${X(t)}" y1="${m.t}" y2="${H-m.b}" stroke="rgba(255,255,255,.04)"/><text x="${X(t)}" y="${H-8}" text-anchor="middle" fill="#8fa0c8" font-size="11">${hm(t)}</text>`;
+  }
+  const now=Date.now();
+  if(now>=data.t0&&now<=t1&&!hidden.fc){
+    const a=now,b=Math.min(now+3600e3,t1);
+    const nw=num(E.fcNext)*1000;
+    o+=`<rect x="${X(a)}" y="${m.t}" width="${Math.max(0,X(b)-X(a))}" height="${H-m.t-m.b}" fill="#ffd166" opacity=".07"/>`;
+    if(isFinite(nw))o+=`<text x="${X(a)+4}" y="${m.t+12}" fill="#ffd166" font-size="11">+1h: ${Math.round(nw)} Wh</text>`;
+    o+=`<line x1="${X(now)}" x2="${X(now)}" y1="${m.t}" y2="${H-m.b}" stroke="#fff" stroke-opacity=".35" stroke-dasharray="3 3"/>`;
+  }
+  o+='<g clip-path="url(#cp)">';
+  for(const s of vis){
+    if(s.fc){
+      for(const seg of fcPts){
+        let d='';seg.forEach((p,i)=>{d+=(i?'L':'M')+X(p.t).toFixed(1)+' '+Y(p.w).toFixed(1)});
+        o+=`<path d="${d}" fill="none" stroke="${s.c}" stroke-width="2" stroke-dasharray="6 5" stroke-linejoin="round"/>`;
+      }
+      continue;
+    }
+    const a=data.s[s.k]||[];let d='',started=false;
+    for(let i=0;i<a.length;i++){if(a[i]==null)continue;d+=(started?'L':'M')+X(data.t0+i*data.step).toFixed(1)+' '+Y(a[i]).toFixed(1);started=true}
+    if(s.area&&started){
+      let li=a.length-1;while(li>0&&a[li]==null)li--;
+      const y0=Y(Math.max(lo,0));
+      o+=`<path d="${d}L${X(data.t0+li*data.step)} ${y0}L${X(data.t0)} ${y0}Z" fill="${s.c}" opacity=".18"/>`;
+    }
+    o+=`<path d="${d}" fill="none" stroke="${s.c}" stroke-width="2" stroke-linejoin="round"/>`;
+  }
+  o+='</g>';
+  o+=`<line id="cur" y1="${m.t}" y2="${H-m.b}" stroke="#fff" stroke-opacity=".4" style="display:none"/>`;
+  svg.innerHTML=o;
+  svg._m={m,W,H,X};
+}
+function drawMonth(){
+  if(mode!=='month'||!mdays)return;
+  const svg=$('csvg'),W=$('chart').clientWidth||800,H=300,m={l:48,r:10,t:10,b:26};
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);svg.setAttribute('height',H);svg._m=null;
+  const defs=monthDefs(),unit=mview==='kwh'?'kWh':'RON';
+  let lo=0,hi=1;
+  for(const d of mdays)if(d.v)for(const s of defs){const x=s.f(d.v);if(isFinite(x)){hi=Math.max(hi,x);lo=Math.min(lo,x)}}
+  hi*=1.1;if(lo<0)lo*=1.1;
+  const Y=v=>m.t+(H-m.t-m.b)*(1-(v-lo)/(hi-lo)),gw=(W-m.l-m.r)/mdays.length,bw=Math.max(2,Math.min(14,gw/(defs.length+1)));
+  let o='';const rng=hi-lo,stp=Math.pow(10,Math.floor(Math.log10(rng/5))),nice=[1,2,2.5,5,10].map(x=>x*stp).find(x=>rng/x<=6)||stp*10;
+  for(let v=Math.ceil(lo/nice)*nice;v<=hi;v+=nice)o+=`<line x1="${m.l}" x2="${W-m.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="#fff" stroke-opacity="${v===0?.25:.07}"/><text x="${m.l-6}" y="${Y(v)+4}" text-anchor="end" fill="#8fa0c8" font-size="11">${nice<1?v.toFixed(1):Math.round(v)}</text>`;
+  mdays.forEach((d,i)=>{
+    const cx=m.l+gw*i+gw/2,dt=new Date(d.t);
+    if(d.v)defs.forEach((s,j)=>{
+      const x=cx+(j-(defs.length-1)/2)*(bw+1)-bw/2,val=s.f(d.v);if(!isFinite(val))return;
+      const y0=Y(0),y1=Y(val);
+      o+=`<rect x="${x}" y="${Math.min(y0,y1)}" width="${bw}" height="${Math.max(1,Math.abs(y0-y1))}" rx="2" fill="${s.c}"><title>${dt.toLocaleDateString('ro-RO',{weekday:'short',day:'numeric',month:'short'})} · ${s.n}: ${val.toFixed(2)} ${unit}</title></rect>`;
+    });
+    if(mdays.length<=16||i%2===0)o+=`<text x="${cx}" y="${H-8}" text-anchor="middle" fill="#8fa0c8" font-size="11">${dt.getDate()}</text>`;
+  });
+  svg.innerHTML=o;
+}
+$('csvg').addEventListener('mousemove',ev=>{
+  const svg=ev.currentTarget;
+  if(mode==='month'||!data||!svg._m)return;
+  const {m,W}=svg._m,r=svg.getBoundingClientRect();
+  const x=ev.clientX-r.left;
+  const t=data.t0+(x-m.l)/(W-m.l-m.r)*data.span;
+  let i=Math.round((t-data.t0)/data.step);i=Math.max(0,Math.min(data.n-1,i));
+  const cur=svg.querySelector('#cur');if(!cur)return;cur.setAttribute('x1',x);cur.setAttribute('x2',x);cur.style.display='';
+  const tip=$('tip');tip.style.display='block';
+  tip.innerHTML=`<b>${hm(t)}</b><br>`+SER.filter(s=>!hidden[s.k]).map(s=>{
+    let v;if(s.fc)v=fcVal(t);else v=(data.s[s.k]||[])[i];
+    const txt=v==null?'–':sgn(s.k==='bat'||s.k==='grid'?Math.round(v):0)+fmtW(Math.abs(v));
+    return `<span style="color:${s.c}">●</span> ${s.name.split(' (')[0]}: ${txt}`}).join('<br>');
+  const w=tip.offsetWidth;tip.style.left=Math.min(x+14,r.width-w-4)+'px';tip.style.top='10px';
+});
+$('csvg').addEventListener('mouseleave',()=>{$('tip').style.display='none';const c=$('csvg').querySelector('#cur');if(c)c.style.display='none'});
+window.addEventListener('resize',draw);
+const wait=setInterval(()=>{if(getHass()){clearInterval(wait);hass=getHass();update();loadMonthBase();loadFc();loadHist();setInterval(()=>{loadHist();loadFc();loadMonthBase()},60000)}},500);
+update();
+</script>
+</body>
+</html>

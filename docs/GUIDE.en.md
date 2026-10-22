@@ -175,19 +175,21 @@ A Home Assistant *blueprint* is not used here: template blueprints create one en
 ### Dashboard
 
 <p><img src="img/dashboard-3.png" width="640" alt="Dashboard, three inverters">
+<img src="img/dashboard-1-grid.png" width="640" alt="Dashboard, one inverter with grid">
 <img src="img/dashboard-1.png" width="640" alt="Dashboard, one off-grid inverter"></p>
 
-Two ready pages, with the same design:
+Three ready pages, with the same design:
 
 | File | For |
 | --- | --- |
 | [`homeassistant/dashboard/solar-3-inverters.html`](../homeassistant/dashboard/solar-3-inverters.html) | three inverters with grid (energy flow with grid, per-inverter cards) |
+| [`homeassistant/dashboard/solar-1-inverter-grid.html`](../homeassistant/dashboard/solar-1-inverter-grid.html) | one inverter with grid |
 | [`homeassistant/dashboard/solar-1-inverter.html`](../homeassistant/dashboard/solar-1-inverter.html) | one off-grid inverter (no grid node) |
 
 1. Copy the file to `<config>/www/` (for example with the File editor or Samba add-on).
 2. **Settings → Dashboards → Add dashboard → New dashboard from scratch**, give it a name.
 3. Open it, **⋮ → Edit dashboard**, edit the view: **View type: Panel (single card)**.
-4. Add a **Webpage** card with URL `/local/solar-3-inverters.html` (or `solar-1-inverter.html`).
+4. Add a **Webpage** card with URL `/local/solar-3-inverters.html` (or `solar-1-inverter-grid.html`, `solar-1-inverter.html`).
 
 The page reads the sensors directly from Home Assistant: live energy flow, today's totals, battery time to empty/full, a card per inverter, and a chart for a day, 24 h, 48 h or a month, with savings in RON. Settings are in the `CONFIG` block at the top of the file: title, number of inverters, grid or off-grid, energy price. The solar forecast tiles use the **Forecast.Solar** integration; without it those tiles show "–".
 

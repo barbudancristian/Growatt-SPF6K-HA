@@ -29,13 +29,19 @@ O pagină de dashboard gata făcută arată tot sistemul dintr-o privire. Citeș
 - **Câte un card pentru fiecare invertor**: puterea de ieșire și bara de încărcare, PV1/PV2, bateria, SOC-ul, rețeaua, tensiunea de ieșire, temperatura, producția de azi și starea invertorului (de exemplu „PV + bypass”).
 - **Puterea în timp**: zi, 24 h, 48 h sau lună; curbele pentru soare, consum, baterie și rețea, cu prognoza solară punctată; plăcuțe cu producția reală, consumul, prognoza și economiile. Vederea pe lună arată bare pe zile, în kWh sau RON.
 
+### Un invertor cu rețea
+
+<img src="docs/img/dashboard-1-grid.png" width="820" alt="Dashboard pentru un invertor Growatt cu rețea">
+
+`homeassistant/dashboard/solar-1-inverter-grid.html`, pentru un singur invertor legat la rețea: aceeași așezare ca pagina pentru trei invertoare, cu rețeaua în flux, în plăcuțe și în grafic, și cu un singur card lat pentru invertor.
+
 ### Un invertor off-grid
 
 <img src="docs/img/dashboard-1.png" width="820" alt="Dashboard pentru un invertor Growatt off-grid">
 
-`homeassistant/dashboard/solar-1-inverter.html`, pentru un singur invertor fără rețea (de exemplu la o cabană): aceeași pagină, fără rețea în flux, în plăcuțe și în grafic, și cu un singur card lat pentru invertor.
+`homeassistant/dashboard/solar-1-inverter.html`, pentru un singur invertor fără rețea (de exemplu la o cabană): aceeași pagină ca mai sus, dar fără rețea în flux, în plăcuțe și în grafic, și cu un singur card lat pentru invertor.
 
-Ambele pagini se setează din blocul `CONFIG` de la începutul fișierului (titlu, număr de invertoare, cu sau fără rețea, prețul energiei). Plăcuțele cu prognoza au nevoie de integrarea Forecast.Solar. Capturile arată date de exemplu.
+Toate cele trei pagini se setează din blocul `CONFIG` de la începutul fișierului (titlu, număr de invertoare, cu sau fără rețea, prețul energiei). Plăcuțele cu prognoza au nevoie de integrarea Forecast.Solar. Capturile arată date de exemplu.
 
 ## Hardware
 
@@ -68,7 +74,7 @@ Instrucțiunile complete: **[docs/GHID.ro.md](docs/GHID.ro.md)**.
 | `.github/workflows/build.yml` | testează programul, compilează firmware-ul și îl publică |
 | `tests/` | rulează programul pe un invertor simulat |
 | `homeassistant/packages/` | senzorii Home Assistant pentru 1 sau 3 invertoare, plus senzorii de sumar |
-| `homeassistant/dashboard/` | paginile de dashboard Home Assistant (1 invertor off-grid, 3 invertoare cu rețea) |
+| `homeassistant/dashboard/` | paginile de dashboard Home Assistant (1 invertor off-grid, 1 invertor cu rețea, 3 invertoare cu rețea) |
 | `tools/ha_package.py` | generează pachetul Home Assistant pentru orice număr de invertoare |
 | `docs/` | ghidul (română, engleză) și lista registrelor |
 
