@@ -171,12 +171,12 @@ class GrowattDongle
     return p
   end
 
-  def store(map, start, resp)
+  def store(regs, start, resp)
     if resp == nil || (resp[1] & 0x80) != 0 return false end
     var n = resp[2] / 2
     var i = 0
     while i < n
-      map[start + i] = resp.get(3 + 2 * i, -2)
+      regs[start + i] = resp.get(3 + 2 * i, -2)
       i += 1
     end
     return true
