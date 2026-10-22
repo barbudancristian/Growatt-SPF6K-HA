@@ -1,0 +1,35 @@
+/*
+  DongleGrowatt - build settings for the Growatt ShineWiFi-X2 (ESP32-C3)
+
+  Copied into the firmware source tree as tasmota/user_config_override.h by the
+  GitHub workflow in .github/workflows/build.yml.
+
+  SPDX-License-Identifier: GPL-3.0-or-later
+*/
+#ifndef _USER_CONFIG_OVERRIDE_H_
+#define _USER_CONFIG_OVERRIDE_H_
+
+// ---- Name shown on the hotspot, in the web pages and in MQTT ----
+#undef  PROJECT
+#define PROJECT                "DongleGrowatt"
+#undef  FRIENDLY_NAME
+#define FRIENDLY_NAME          "DongleGrowatt"
+// Hotspot / host name: "DongleGrowatt-1234" (the %.0s swallows the MQTT topic argument)
+#undef  WIFI_DEFAULT_HOSTNAME
+#define WIFI_DEFAULT_HOSTNAME  "DongleGrowatt%.0s-%04d"
+// MQTT topic: "growatt_ABC123" (last 6 hex digits of the MAC)
+#undef  MQTT_TOPIC
+#define MQTT_TOPIC             "growatt_%06X"
+// Password of the setup hotspot (at least 8 characters)
+#undef  WIFI_AP_PASSPHRASE
+#define WIFI_AP_PASSPHRASE     "donglegrowatt"
+
+// ---- Telemetry every 10 s (tele/<topic>/SENSOR, key "Growatt") ----
+#undef  TELE_PERIOD
+#define TELE_PERIOD            10
+
+// ---- No automatic online updates from a third-party server ----
+#undef  OTA_URL
+#define OTA_URL                ""
+
+#endif  // _USER_CONFIG_OVERRIDE_H_

@@ -1,0 +1,18 @@
+DongleGrowatt
+Copyright (C) 2026 Barbu Dan-Cristian
+
+This project is licensed under the GNU General Public License v3.0 (see LICENSE).
+
+The DongleGrowatt firmware is built from the Tasmota firmware
+(https://github.com/arendst/Tasmota), Copyright (C) Theo Arends and contributors,
+licensed under the GNU General Public License v3.0. The exact upstream version used
+is set by CORE_REF in .github/workflows/build.yml; its complete source code is
+available at https://github.com/arendst/Tasmota/tree/<CORE_REF>.
+
+The changes made by this project are the files in build/ (build settings) and
+dongle/ (driver scripts). The copyright notice shown at the bottom of the
+device's web pages is part of the upstream firmware and is kept as required by
+the license.
+
+Growatt, ShineWiFi and SPF are trademarks of their respective owners. This project
+is not affiliated with Growatt or with the upstream firmware project.

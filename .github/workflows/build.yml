@@ -1,0 +1,92 @@
+name: Build firmware
+
+# Builds DongleGrowatt for the ShineWiFi-X2 (ESP32-C3):
+#  1. runs the driver against a simulated inverter (tests/run.sh)
+#  2. compiles the firmware with the settings in build/ and the scripts in dongle/
+#  3. uploads DongleGrowatt.factory.bin (first flash) and DongleGrowatt.bin (updates)
+#     as a workflow artifact, and attaches them to a GitHub release when one is published
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+env:
+  CORE_REPO: arendst/Tasmota   # upstream firmware source (GPL-3.0), see NOTICE
+  CORE_REF: v15.6.0
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out this repository
+        uses: actions/checkout@v4
+
+      - name: Check out the firmware core
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.CORE_REPO }}
+          ref: ${{ env.CORE_REF }}
+          path: core
+
+      - name: Test the driver against a simulated inverter
+        run: |
+          make -C core/lib/libesp32/berry -j4 > /dev/null
+          tests/run.sh "$PWD/core/lib/libesp32/berry/berry"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install the build tools
+        run: pip install pioarduino
+
+      - name: Add DongleGrowatt settings and scripts
+        run: |
+          cp build/user_config_override.h core/tasmota/user_config_override.h
+          cp build/platformio_tasmota_cenv.ini core/platformio_tasmota_cenv.ini
+          mkdir -p core/dongle
+          cp dongle/*.be core/dongle/
+
+      - name: Build the safe-boot partition
+        working-directory: core
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: '1'
+        run: platformio run -e tasmota32c3-safeboot
+
+      - name: Build DongleGrowatt
+        working-directory: core
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: '1'
+        run: platformio run -e tasmota32c3-donglegrowatt
+
+      - name: Collect the firmware files
+        run: |
+          ls -la core/build_output/firmware
+          mkdir -p out
+          cp core/build_output/firmware/tasmota32c3-donglegrowatt.factory.bin out/DongleGrowatt.factory.bin
+          cp core/build_output/firmware/tasmota32c3-donglegrowatt.bin out/DongleGrowatt.bin
+          cp dongle/growatt.be dongle/autoexec.be out/
+          (cd out && sha256sum * > SHA256SUMS.txt)
+          cat out/SHA256SUMS.txt
+
+      - name: Upload the firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: DongleGrowatt-firmware
+          path: out/
+
+      - name: Attach the firmware to the release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: out/*

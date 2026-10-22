@@ -1,0 +1,757 @@
+# DongleGrowatt - Home Assistant MQTT sensors
+#
+# 1. Replace growatt_ABC123 below with your dongle's MQTT topic
+#    (shown on the dongle's "Dongle settings" page, field "Topic").
+# 2. Put this file in <config>/packages/donglegrowatt.yaml and enable packages in configuration.yaml:
+#      homeassistant:
+#        packages: !include_dir_named packages
+# 3. Restart Home Assistant.
+#
+# For a second dongle, copy the file, change the topic and the unique_id prefix (dg1_ -> dg2_).
+
+mqtt:
+  sensor:
+    - name: "Growatt Status"
+      unique_id: dg1_status
+      state_topic: "tele/growatt_ABC123/SENSOR"
+      value_template: "{{ value_json.get('Growatt', {}).get('Status') }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_ABC123/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_ABC123/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      device:
+        identifiers: ["donglegrowatt_1"]
+        name: "Growatt inverter"
+        manufacturer: "Growatt"
+        model: "SPF 6000 ES Plus"
+    - name: "Growatt Battery SOC"
+      unique_id: dg1_battery_soc
+      state_topic: "tele/growatt_ABC123/SENSOR"
+      value_template: "{{ value_json.get('Growatt', {}).get('Battery', {}).get('SOC') }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_ABC123/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_ABC123/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "%"
+      device_class: battery
+      state_class: measurement
+      suggested_display_precision: 0
+      device:
+        identifiers: ["donglegrowatt_1"]
+        name: "Growatt inverter"
+        manufacturer: "Growatt"
+        model: "SPF 6000 ES Plus"
+    - name: "Growatt Battery voltage"
+      unique_id: dg1_battery_voltage
+      state_topic: "tele/growatt_ABC123/SENSOR"
+      value_template: "{{ value_json.get('Growatt', {}).get('Battery', {}).get('Voltage') }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_ABC123/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_ABC123/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "V"
+      device_class: voltage
+      state_class: measurement
+      suggested_display_precision: 2
+      device:
+        identifiers: ["donglegrowatt_1"]
+        name: "Growatt inverter"
+        manufacturer: "Growatt"
+        model: "SPF 6000 ES Plus"
+    - name: "Growatt Battery power"
+      unique_id: dg1_battery_power
+      state_topic: "tele/growatt_ABC123/SENSOR"
+      value_template: "{{ value_json.get('Growatt', {}).get('Battery', {}).get('Power') }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_ABC123/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_ABC123/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+      suggested_display_precision: 0
+      device:
+        identifiers: ["donglegrowatt_1"]
+        name: "Growatt inverter"
+        manufacturer: "Growatt"
+        model: "SPF 6000 ES Plus"
+    - name: "Growatt Battery discharge current"
+      unique_id: dg1_battery_dischargecurrent
+      state_topic: "tele/growatt_ABC123/SENSOR"
+      value_template: "{{ value_json.get('Growatt', {}).get('Battery', {}).get('DischargeCurrent') }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_ABC123/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_ABC123/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "A"
+      device_class: current
+      state_class: measurement
+      suggested_display_precision: 1
+      device:
+        identifiers: ["donglegrowatt_1"]
+        name: "Growatt inverter"
+        manufacturer: "Growatt"
+        model: "SPF 6000 ES Plus"
+    - name: "Growatt PV power"
+      unique_id: dg1_pvpower
+      state_topic: "tele/growatt_ABC123/SENSOR"
+      value_template: "{{ value_json.get('Growatt', {}).get('PVPower') }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_ABC123/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_ABC123/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+      suggested_display_precision: 0
+      device:
+        identifiers: ["donglegrowatt_1"]
+        name: "Growatt inverter"
+        manufacturer: "Growatt"
+        model: "SPF 6000 ES Plus"
+    - name: "Growatt PV1 voltage"
+      unique_id: dg1_pv1_voltage
+      state_topic: "tele/growatt_ABC123/SENSOR"
+      value_template: "{{ value_json.get('Growatt', {}).get('PV1', {}).get('Voltage') }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_ABC123/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_ABC123/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "V"
+      device_class: voltage
+      state_class: measurement
+      suggested_display_precision: 1
+      device:
+        identifiers: ["donglegrowatt_1"]
+        name: "Growatt inverter"
+        manufacturer: "Growatt"
+        model: "SPF 6000 ES Plus"
+    - name: "Growatt PV1 current"
+      unique_id: dg1_pv1_current
+      state_topic: "tele/growatt_ABC123/SENSOR"
+      value_template: "{{ value_json.get('Growatt', {}).get('PV1', {}).get('Current') }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_ABC123/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_ABC123/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "A"
+      device_class: current
+      state_class: measurement
+      suggested_display_precision: 1
+      device:
+        identifiers: ["donglegrowatt_1"]
+        name: "Growatt inverter"
+        manufacturer: "Growatt"
+        model: "SPF 6000 ES Plus"
+    - name: "Growatt PV1 power"
+      unique_id: dg1_pv1_power
+      state_topic: "tele/growatt_ABC123/SENSOR"
+      value_template: "{{ value_json.get('Growatt', {}).get('PV1', {}).get('Power') }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_ABC123/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_ABC123/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+      suggested_display_precision: 0
+      device:
+        identifiers: ["donglegrowatt_1"]
+        name: "Growatt inverter"
+        manufacturer: "Growatt"
+        model: "SPF 6000 ES Plus"
+    - name: "Growatt PV2 voltage"
+      unique_id: dg1_pv2_voltage
+      state_topic: "tele/growatt_ABC123/SENSOR"
+      value_template: "{{ value_json.get('Growatt', {}).get('PV2', {}).get('Voltage') }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_ABC123/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_ABC123/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "V"
+      device_class: voltage
+      state_class: measurement
+      suggested_display_precision: 1
+      device:
+        identifiers: ["donglegrowatt_1"]
+        name: "Growatt inverter"
+        manufacturer: "Growatt"
+        model: "SPF 6000 ES Plus"
+    - name: "Growatt PV2 current"
+      unique_id: dg1_pv2_current
+      state_topic: "tele/growatt_ABC123/SENSOR"
+      value_template: "{{ value_json.get('Growatt', {}).get('PV2', {}).get('Current') }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_ABC123/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_ABC123/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "A"
+      device_class: current
+      state_class: measurement
+      suggested_display_precision: 1
+      device:
+        identifiers: ["donglegrowatt_1"]
+        name: "Growatt inverter"
+        manufacturer: "Growatt"
+        model: "SPF 6000 ES Plus"
+    - name: "Growatt PV2 power"
+      unique_id: dg1_pv2_power
+      state_topic: "tele/growatt_ABC123/SENSOR"
+      value_template: "{{ value_json.get('Growatt', {}).get('PV2', {}).get('Power') }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_ABC123/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_ABC123/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+      suggested_display_precision: 0
+      device:
+        identifiers: ["donglegrowatt_1"]
+        name: "Growatt inverter"
+        manufacturer: "Growatt"
+        model: "SPF 6000 ES Plus"
+    - name: "Growatt Load power"
+      unique_id: dg1_output_power
+      state_topic: "tele/growatt_ABC123/SENSOR"
+      value_template: "{{ value_json.get('Growatt', {}).get('Output', {}).get('Power') }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_ABC123/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_ABC123/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+      suggested_display_precision: 0
+      device:
+        identifiers: ["donglegrowatt_1"]
+        name: "Growatt inverter"
+        manufacturer: "Growatt"
+        model: "SPF 6000 ES Plus"
+    - name: "Growatt Load apparent power"
+      unique_id: dg1_output_apparentpower
+      state_topic: "tele/growatt_ABC123/SENSOR"
+      value_template: "{{ value_json.get('Growatt', {}).get('Output', {}).get('ApparentPower') }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_ABC123/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_ABC123/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "VA"
+      device_class: apparent_power
+      state_class: measurement
+      suggested_display_precision: 0
+      device:
+        identifiers: ["donglegrowatt_1"]
+        name: "Growatt inverter"
+        manufacturer: "Growatt"
+        model: "SPF 6000 ES Plus"
+    - name: "Growatt Inverter load"
+      unique_id: dg1_output_load
+      state_topic: "tele/growatt_ABC123/SENSOR"
+      value_template: "{{ value_json.get('Growatt', {}).get('Output', {}).get('Load') }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_ABC123/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_ABC123/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "%"
+      state_class: measurement
+      suggested_display_precision: 1
+      device:
+        identifiers: ["donglegrowatt_1"]
+        name: "Growatt inverter"
+        manufacturer: "Growatt"
+        model: "SPF 6000 ES Plus"
+    - name: "Growatt Output voltage"
+      unique_id: dg1_output_voltage
+      state_topic: "tele/growatt_ABC123/SENSOR"
+      value_template: "{{ value_json.get('Growatt', {}).get('Output', {}).get('Voltage') }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_ABC123/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_ABC123/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "V"
+      device_class: voltage
+      state_class: measurement
+      suggested_display_precision: 1
+      device:
+        identifiers: ["donglegrowatt_1"]
+        name: "Growatt inverter"
+        manufacturer: "Growatt"
+        model: "SPF 6000 ES Plus"
+    - name: "Growatt Output frequency"
+      unique_id: dg1_output_frequency
+      state_topic: "tele/growatt_ABC123/SENSOR"
+      value_template: "{{ value_json.get('Growatt', {}).get('Output', {}).get('Frequency') }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_ABC123/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_ABC123/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "Hz"
+      device_class: frequency
+      state_class: measurement
+      suggested_display_precision: 2
+      device:
+        identifiers: ["donglegrowatt_1"]
+        name: "Growatt inverter"
+        manufacturer: "Growatt"
+        model: "SPF 6000 ES Plus"
+    - name: "Growatt Output current"
+      unique_id: dg1_output_current
+      state_topic: "tele/growatt_ABC123/SENSOR"
+      value_template: "{{ value_json.get('Growatt', {}).get('Output', {}).get('Current') }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_ABC123/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_ABC123/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "A"
+      device_class: current
+      state_class: measurement
+      suggested_display_precision: 1
+      device:
+        identifiers: ["donglegrowatt_1"]
+        name: "Growatt inverter"
+        manufacturer: "Growatt"
+        model: "SPF 6000 ES Plus"
+    - name: "Growatt Inverter temperature"
+      unique_id: dg1_inverter_temperature
+      state_topic: "tele/growatt_ABC123/SENSOR"
+      value_template: "{{ value_json.get('Growatt', {}).get('Inverter', {}).get('Temperature') }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_ABC123/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_ABC123/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "°C"
+      device_class: temperature
+      state_class: measurement
+      suggested_display_precision: 1
+      device:
+        identifiers: ["donglegrowatt_1"]
+        name: "Growatt inverter"
+        manufacturer: "Growatt"
+        model: "SPF 6000 ES Plus"
+    - name: "Growatt DC-DC temperature"
+      unique_id: dg1_inverter_dcdctemperature
+      state_topic: "tele/growatt_ABC123/SENSOR"
+      value_template: "{{ value_json.get('Growatt', {}).get('Inverter', {}).get('DCDCTemperature') }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_ABC123/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_ABC123/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "°C"
+      device_class: temperature
+      state_class: measurement
+      suggested_display_precision: 1
+      device:
+        identifiers: ["donglegrowatt_1"]
+        name: "Growatt inverter"
+        manufacturer: "Growatt"
+        model: "SPF 6000 ES Plus"
+    - name: "Growatt Bus voltage"
+      unique_id: dg1_inverter_busvoltage
+      state_topic: "tele/growatt_ABC123/SENSOR"
+      value_template: "{{ value_json.get('Growatt', {}).get('Inverter', {}).get('BusVoltage') }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_ABC123/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_ABC123/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "V"
+      device_class: voltage
+      state_class: measurement
+      suggested_display_precision: 1
+      device:
+        identifiers: ["donglegrowatt_1"]
+        name: "Growatt inverter"
+        manufacturer: "Growatt"
+        model: "SPF 6000 ES Plus"
+    - name: "Growatt Fault code"
+      unique_id: dg1_inverter_faultcode
+      state_topic: "tele/growatt_ABC123/SENSOR"
+      value_template: "{{ value_json.get('Growatt', {}).get('Inverter', {}).get('FaultCode') }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_ABC123/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_ABC123/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      device:
+        identifiers: ["donglegrowatt_1"]
+        name: "Growatt inverter"
+        manufacturer: "Growatt"
+        model: "SPF 6000 ES Plus"
+    - name: "Growatt Warning code"
+      unique_id: dg1_inverter_warningcode
+      state_topic: "tele/growatt_ABC123/SENSOR"
+      value_template: "{{ value_json.get('Growatt', {}).get('Inverter', {}).get('WarningCode') }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_ABC123/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_ABC123/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      device:
+        identifiers: ["donglegrowatt_1"]
+        name: "Growatt inverter"
+        manufacturer: "Growatt"
+        model: "SPF 6000 ES Plus"
+    - name: "Growatt PV energy today"
+      unique_id: dg1_energy_pvtoday
+      state_topic: "tele/growatt_ABC123/SENSOR"
+      value_template: "{{ value_json.get('Growatt', {}).get('Energy', {}).get('PVToday') }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_ABC123/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_ABC123/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+      suggested_display_precision: 1
+      device:
+        identifiers: ["donglegrowatt_1"]
+        name: "Growatt inverter"
+        manufacturer: "Growatt"
+        model: "SPF 6000 ES Plus"
+    - name: "Growatt PV energy total"
+      unique_id: dg1_energy_pvtotal
+      state_topic: "tele/growatt_ABC123/SENSOR"
+      value_template: "{{ value_json.get('Growatt', {}).get('Energy', {}).get('PVTotal') }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_ABC123/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_ABC123/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+      suggested_display_precision: 1
+      device:
+        identifiers: ["donglegrowatt_1"]
+        name: "Growatt inverter"
+        manufacturer: "Growatt"
+        model: "SPF 6000 ES Plus"
+    - name: "Growatt Load energy today"
+      unique_id: dg1_energy_loadtoday
+      state_topic: "tele/growatt_ABC123/SENSOR"
+      value_template: "{{ value_json.get('Growatt', {}).get('Energy', {}).get('LoadToday') }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_ABC123/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_ABC123/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+      suggested_display_precision: 1
+      device:
+        identifiers: ["donglegrowatt_1"]
+        name: "Growatt inverter"
+        manufacturer: "Growatt"
+        model: "SPF 6000 ES Plus"
+    - name: "Growatt Load energy total"
+      unique_id: dg1_energy_loadtotal
+      state_topic: "tele/growatt_ABC123/SENSOR"
+      value_template: "{{ value_json.get('Growatt', {}).get('Energy', {}).get('LoadTotal') }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_ABC123/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_ABC123/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+      suggested_display_precision: 1
+      device:
+        identifiers: ["donglegrowatt_1"]
+        name: "Growatt inverter"
+        manufacturer: "Growatt"
+        model: "SPF 6000 ES Plus"
+    - name: "Growatt Battery discharge today"
+      unique_id: dg1_energy_dischargetoday
+      state_topic: "tele/growatt_ABC123/SENSOR"
+      value_template: "{{ value_json.get('Growatt', {}).get('Energy', {}).get('DischargeToday') }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_ABC123/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_ABC123/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+      suggested_display_precision: 1
+      device:
+        identifiers: ["donglegrowatt_1"]
+        name: "Growatt inverter"
+        manufacturer: "Growatt"
+        model: "SPF 6000 ES Plus"
+    - name: "Growatt Battery discharge total"
+      unique_id: dg1_energy_dischargetotal
+      state_topic: "tele/growatt_ABC123/SENSOR"
+      value_template: "{{ value_json.get('Growatt', {}).get('Energy', {}).get('DischargeTotal') }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_ABC123/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_ABC123/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+      suggested_display_precision: 1
+      device:
+        identifiers: ["donglegrowatt_1"]
+        name: "Growatt inverter"
+        manufacturer: "Growatt"
+        model: "SPF 6000 ES Plus"
+    - name: "Growatt AC charge today"
+      unique_id: dg1_energy_acchargetoday
+      state_topic: "tele/growatt_ABC123/SENSOR"
+      value_template: "{{ value_json.get('Growatt', {}).get('Energy', {}).get('ACChargeToday') }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_ABC123/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_ABC123/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+      suggested_display_precision: 1
+      device:
+        identifiers: ["donglegrowatt_1"]
+        name: "Growatt inverter"
+        manufacturer: "Growatt"
+        model: "SPF 6000 ES Plus"
+    - name: "Growatt AC charge total"
+      unique_id: dg1_energy_acchargetotal
+      state_topic: "tele/growatt_ABC123/SENSOR"
+      value_template: "{{ value_json.get('Growatt', {}).get('Energy', {}).get('ACChargeTotal') }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_ABC123/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_ABC123/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+      suggested_display_precision: 1
+      device:
+        identifiers: ["donglegrowatt_1"]
+        name: "Growatt inverter"
+        manufacturer: "Growatt"
+        model: "SPF 6000 ES Plus"
+    - name: "Growatt Output priority"
+      unique_id: dg1_settings_outputpriority
+      state_topic: "tele/growatt_ABC123/SENSOR"
+      value_template: "{{ value_json.get('Growatt', {}).get('Settings', {}).get('OutputPriority') }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_ABC123/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_ABC123/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      device:
+        identifiers: ["donglegrowatt_1"]
+        name: "Growatt inverter"
+        manufacturer: "Growatt"
+        model: "SPF 6000 ES Plus"
+    - name: "Growatt Charger priority"
+      unique_id: dg1_settings_chargerpriority
+      state_topic: "tele/growatt_ABC123/SENSOR"
+      value_template: "{{ value_json.get('Growatt', {}).get('Settings', {}).get('ChargerPriority') }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_ABC123/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_ABC123/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      device:
+        identifiers: ["donglegrowatt_1"]
+        name: "Growatt inverter"
+        manufacturer: "Growatt"
+        model: "SPF 6000 ES Plus"
+    - name: "Growatt Battery type"
+      unique_id: dg1_settings_batterytype
+      state_topic: "tele/growatt_ABC123/SENSOR"
+      value_template: "{{ value_json.get('Growatt', {}).get('Settings', {}).get('BatteryType') }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_ABC123/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_ABC123/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      device:
+        identifiers: ["donglegrowatt_1"]
+        name: "Growatt inverter"
+        manufacturer: "Growatt"
+        model: "SPF 6000 ES Plus"
+    - name: "Growatt Max charge current"
+      unique_id: dg1_settings_maxchargecurrent
+      state_topic: "tele/growatt_ABC123/SENSOR"
+      value_template: "{{ value_json.get('Growatt', {}).get('Settings', {}).get('MaxChargeCurrent') }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_ABC123/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_ABC123/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "A"
+      device_class: current
+      suggested_display_precision: 0
+      device:
+        identifiers: ["donglegrowatt_1"]
+        name: "Growatt inverter"
+        manufacturer: "Growatt"
+        model: "SPF 6000 ES Plus"
