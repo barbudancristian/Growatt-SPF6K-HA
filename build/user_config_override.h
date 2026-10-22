@@ -32,4 +32,22 @@
 #undef  OTA_URL
 #define OTA_URL                ""
 
+// ---- No automatic announcement on tasmota/discovery/... ----
+// The Home Assistant packages in homeassistant/packages/ read the data directly,
+// so the announcement is not needed and would only show a "Discovered" card in HA.
+#undef  USE_TASMOTA_DISCOVERY
+
+// ---- Time zone: Romania / Eastern Europe (EET, UTC+2; summer EEST, UTC+3) ----
+// Change it on the device with the Timezone / TimeStd / TimeDst commands if needed.
+#undef  APP_TIMEZONE
+#define APP_TIMEZONE           99
+#undef  TIME_DST_HOUR
+#define TIME_DST_HOUR          3
+#undef  TIME_DST_OFFSET
+#define TIME_DST_OFFSET        +180
+#undef  TIME_STD_HOUR
+#define TIME_STD_HOUR          4
+#undef  TIME_STD_OFFSET
+#define TIME_STD_OFFSET        +120
+
 #endif  // _USER_CONFIG_OVERRIDE_H_

@@ -67,17 +67,28 @@ def getter(path):
     return expr + f".get('{parts[-1]}')"
 
 
-def template(path, special):
+def rnd(expr, prec):
+    """Round a number to the sensor's precision (the dongle sends 32-bit floats such as 53.080006)."""
+    if prec is None:
+        return expr
+    if prec == 0:
+        return "(" + expr + ") | round(0) | int"
+    return "(" + expr + ") | round(" + str(prec) + ")"
+
+
+def template(path, special, prec=None):
     if special == "negate":
-        return "{% set v = " + getter(path) + " %}{{ -v if v is number else none }}"
+        return "{% set v = " + getter(path) + " %}{{ " + rnd("-v", prec) + " if v is number else none }}"
     if special == "grid":
         return ("{% set g = value_json.get('Growatt', {}) %}"
                 "{% set out = g.get('Output', {}).get('Power') %}"
                 "{% set ac = g.get('Grid', {}).get('ACChargePower') %}"
                 "{% if out is number and ac is number %}"
-                "{{ (out if g.get('StatusCode') in [8, 9, 10, 11] else 0) + ac }}"
+                "{{ ((out if g.get('StatusCode') in [8, 9, 10, 11] else 0) + ac) | round(0) | int }}"
                 "{% else %}{{ none }}{% endif %}")
-    return "{{ " + getter(path) + " }}"
+    if prec is None:
+        return "{{ " + getter(path) + " }}"
+    return "{% set v = " + getter(path) + " %}{{ " + rnd("v", prec) + " if v is number else none }}"
 
 
 def q(s):
@@ -93,7 +104,7 @@ def mqtt_sensors(n):
             f"      unique_id: growatt_{n}_{key}",
             f"      default_entity_id: sensor.growatt_{n}_{key}",
             f"      state_topic: \"tele/{topic}/SENSOR\"",
-            f"      value_template: {q(template(path, special))}",
+            f"      value_template: {q(template(path, special, prec))}",
             "      availability_mode: all",
             "      availability:",
             f"        - topic: \"tele/{topic}/LWT\"",
