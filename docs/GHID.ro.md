@@ -69,12 +69,26 @@ python -m esptool --chip esp32c3 -p COM7 --before no-reset get-security-info
 
 Trebuie să apară `ESP32-C3`, **Secure Boot: Disabled** și **Flash Encryption: Disabled**. Dacă oricare e activat, oprește-te.
 
-Fă backup la toată memoria de două ori și compară:
+Citește toată memoria de două ori și compară rezultatele. Comenzile se dau **pe rând, nu toate odată**: adaptorul nu poate reseta cipul (pinul RTS nu e legat), iar după o citire cipul rămâne la viteza de 230400, așa că o a doua comandă dată imediat după prima eșuează.
+
+**a) Primul backup.** Scoate adaptorul din USB, bagă-l la loc, apoi:
 
 ```
 python -m esptool --chip esp32c3 -p COM7 --before no-reset -b 230400 read-flash 0 ALL stock_backup_1.bin
+```
+
+**b) Al doilea backup.** Așteaptă să termine prima citire, scoate din nou adaptorul din USB, bagă-l la loc, apoi:
+
+```
 python -m esptool --chip esp32c3 -p COM7 --before no-reset -b 230400 read-flash 0 ALL stock_backup_2.bin
-Get-FileHash stock_backup_1.bin, stock_backup_2.bin
+```
+
+**c) Mută-le într-un folder separat și compară-le** (aici nu mai e nevoie de adaptor):
+
+```
+mkdir Backup-ShineWiFi-X2
+Move-Item stock_backup_1.bin, stock_backup_2.bin Backup-ShineWiFi-X2
+Get-FileHash Backup-ShineWiFi-X2\*.bin
 ```
 
 Cele două hash-uri trebuie să fie identice. Păstrează backup-ul privat: conține parola Wi-Fi și cheile cloud-ului Growatt.
@@ -240,5 +254,5 @@ Lista registrelor e în [registers.md](registers.md).
 Legi adaptorul, pui puntea IO9, scoți și bagi la loc adaptorul, apoi:
 
 ```
-python -m esptool --chip esp32c3 -p COM7 --before no-reset -b 230400 write-flash 0x0 stock_backup_1.bin
+python -m esptool --chip esp32c3 -p COM7 --before no-reset -b 230400 write-flash 0x0 Backup-ShineWiFi-X2\stock_backup_1.bin
 ```

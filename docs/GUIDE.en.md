@@ -69,12 +69,26 @@ python -m esptool --chip esp32c3 -p COM7 --before no-reset get-security-info
 
 You need `ESP32-C3`, **Secure Boot: Disabled**, **Flash Encryption: Disabled**. If either is enabled, stop.
 
-Back up the whole flash twice and compare:
+Read the whole flash twice and compare. Run the commands **one at a time, not all at once**: the adapter cannot reset the chip (its RTS pin is not wired), and after a read the chip stays at 230400 baud, so a second command run right after the first one fails.
+
+**a) First backup.** Unplug the adapter from USB, plug it back in, then:
 
 ```
 python -m esptool --chip esp32c3 -p COM7 --before no-reset -b 230400 read-flash 0 ALL stock_backup_1.bin
+```
+
+**b) Second backup.** Wait for the first read to finish, unplug the adapter from USB again, plug it back in, then:
+
+```
 python -m esptool --chip esp32c3 -p COM7 --before no-reset -b 230400 read-flash 0 ALL stock_backup_2.bin
-Get-FileHash stock_backup_1.bin, stock_backup_2.bin
+```
+
+**c) Move them into a separate folder and compare them** (the adapter is not needed for this):
+
+```
+mkdir Backup-ShineWiFi-X2
+Move-Item stock_backup_1.bin, stock_backup_2.bin Backup-ShineWiFi-X2
+Get-FileHash Backup-ShineWiFi-X2\*.bin
 ```
 
 The two hashes must be identical. Keep the backup private: it contains your Wi-Fi password and the Growatt cloud keys.
@@ -240,5 +254,5 @@ The register list is in [registers.md](registers.md).
 Wire the adapter, bridge IO9, replug, then:
 
 ```
-python -m esptool --chip esp32c3 -p COM7 --before no-reset -b 230400 write-flash 0x0 stock_backup_1.bin
+python -m esptool --chip esp32c3 -p COM7 --before no-reset -b 230400 write-flash 0x0 Backup-ShineWiFi-X2\stock_backup_1.bin
 ```
