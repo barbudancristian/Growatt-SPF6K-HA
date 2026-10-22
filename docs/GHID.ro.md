@@ -128,9 +128,11 @@ La fiecare 10 secunde dongle-ul publică pe `tele/<topic>/SENSOR`, sub cheia `Gr
  "PV1":{"Voltage":0,"Current":0,"Power":0},"PV2":{"Voltage":245.6,"Current":0.6,"Power":161},
  "Battery":{"SOC":21,"Voltage":51.9,"Power":-108.8,"DischargeCurrent":0},
  "Output":{"Voltage":231.5,"Frequency":50.04,"Current":1.3,"Power":143,"ApparentPower":312,"Load":2.4},
+ "Grid":{"Voltage":223.1,"Frequency":49.98,"ACChargePower":85},
  "Inverter":{"Temperature":24.8,"DCDCTemperature":21.8,"BusVoltage":455,"FaultCode":0,"WarningCode":0},
  "Energy":{"PVToday":0.2,"PVTotal":502.3,"LoadToday":0.4,"LoadTotal":354.8,"ACChargeToday":0,
-           "ACChargeTotal":4.1,"DischargeToday":0.3,"DischargeTotal":206.2},
+           "ACChargeTotal":4.1,"DischargeToday":0.3,"DischargeTotal":206.2,
+           "ACDischargeToday":2.7,"ACDischargeTotal":183},
  "Settings":{"OutputPriority":"SBU","ChargerPriority":"Solar only","BatteryType":"Lithium","MaxChargeCurrent":48}}}
 ```
 
@@ -138,11 +140,55 @@ Unități: V, A, W, VA, Hz, °C, %, kWh. **Puterea bateriei e negativă la înc�
 
 ## 10. Home Assistant
 
-1. Instalezi add-on-ul **Mosquitto broker** și integrarea **MQTT**, apoi creezi un utilizator Home Assistant pentru dongle.
-2. În **Dongle settings → MQTT** treci adresa Home Assistant-ului, portul 1883 și acel utilizator.
-3. Copiezi [`homeassistant/donglegrowatt.yaml`](../homeassistant/donglegrowatt.yaml) în `<config>/packages/`, înlocuiești `growatt_ABC123` cu topicul dongle-ului tău, activezi pachetele în `configuration.yaml` și repornești Home Assistant.
+### Senzorii
 
-Primești un dispozitiv „Growatt inverter” cu 35 de senzori, gata pentru panoul Energy.
+1. Instalezi add-on-ul **Mosquitto broker** și integrarea **MQTT**, apoi creezi un utilizator Home Assistant pentru dongle-uri.
+2. Pe fiecare dongle, în **Dongle settings → MQTT**, treci adresa Home Assistant-ului, portul 1883 și acel utilizator. Notează **Topic**-ul fiecărui dongle.
+3. Copiezi pachetul potrivit în `<config>/packages/`:
+   - un invertor: [`homeassistant/packages/growatt_1_inverter.yaml`](../homeassistant/packages/growatt_1_inverter.yaml)
+   - trei invertoare (de exemplu câte unul pe fază): [`homeassistant/packages/growatt_3_inverters.yaml`](../homeassistant/packages/growatt_3_inverters.yaml)
+   - alt număr: `python tools/ha_package.py 2 > growatt_2_inverters.yaml`
+4. În fișier înlocuiești `growatt_INV1`, `growatt_INV2`, ... cu topicurile dongle-urilor, în aceeași ordine ca invertoarele.
+5. Activezi pachetele în `configuration.yaml` și repornești Home Assistant:
+   ```yaml
+   homeassistant:
+     packages: !include_dir_named packages
+   ```
+6. În **Settings → Devices & services → Helpers** setezi o singură dată **Growatt battery capacity** (kWh) și **Growatt battery minimum SOC** (%).
+
+Fiecare invertor devine un dispozitiv „Growatt inverter N” cu 41 de senzori numiți `sensor.growatt_N_...`. Pachetul creează și senzorii de sumar folosiți de dashboard:
+
+| Senzor | Ce înseamnă |
+| --- | --- |
+| `sensor.productie_solara_totala` | puterea PV a tuturor invertoarelor (W) |
+| `sensor.consum_casa_total` | consumul casei, toate invertoarele (W) |
+| `sensor.retea_putere_totala` | puterea luată din rețea, estimată din bypass și încărcarea din AC (W) |
+| `sensor.baterie_putere_neta` | puterea bateriei, toate invertoarele, **pozitivă la încărcare** (W) |
+| `sensor.baterie_soc_mediu` | SOC mediu (%) |
+| `sensor.baterie_timp_pana_goala` / `_plina` | ore până la gol / plin, la puterea de acum |
+| `sensor.baterie_eta_goala` / `_plina` | ora la care bateria va fi goală / plină |
+
+Senzorii `*_energy_total` au statistici pe termen lung, deci merg în panoul **Energy** și în vederea pe lună a dashboard-ului.
+
+Nu folosim un *blueprint* Home Assistant: blueprint-urile pentru template creează câte o entitate pentru fiecare folosire, iar maparea asta are nevoie de vreo 40 de entități pe invertor. Pachetul (și generatorul pentru alt număr de invertoare) face același lucru într-un singur fișier.
+
+### Dashboard
+
+<p><img src="img/dashboard-3.png" width="640" alt="Dashboard, trei invertoare"></p>
+
+Două pagini gata făcute, cu același design:
+
+| Fișier | Pentru |
+| --- | --- |
+| [`homeassistant/dashboard/solar-3-inverters.html`](../homeassistant/dashboard/solar-3-inverters.html) | trei invertoare cu rețea (flux de energie cu rețea, card pentru fiecare invertor) |
+| [`homeassistant/dashboard/solar-1-inverter.html`](../homeassistant/dashboard/solar-1-inverter.html) | un invertor off-grid (fără rețea) |
+
+1. Copiezi fișierul în `<config>/www/` (de exemplu cu add-on-ul File editor sau Samba).
+2. **Settings → Dashboards → Add dashboard → New dashboard from scratch** și îi dai un nume.
+3. Îl deschizi, **⋮ → Edit dashboard**, editezi vederea: **View type: Panel (single card)**.
+4. Adaugi un card **Webpage** cu adresa `/local/solar-3-inverters.html` (sau `solar-1-inverter.html`).
+
+Pagina citește senzorii direct din Home Assistant: fluxul de energie live, totalurile de azi, timpul până la baterie goală sau plină, câte un card pentru fiecare invertor și un grafic pe zi, 24 h, 48 h sau lună, cu economiile în RON. Setările sunt în blocul `CONFIG` de la începutul fișierului: titlu, număr de invertoare, cu rețea sau off-grid, prețul energiei. Plăcuțele cu prognoza solară folosesc integrarea **Forecast.Solar**; fără ea, arată „–”.
 
 ## 11. Modbus TCP
 

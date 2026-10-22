@@ -7,7 +7,7 @@ Firmware for the Growatt **ShineWiFi-X2** stick that turns it into a local gatew
 ## What it does
 
 - **Reads the inverter** every 10 seconds over the stick's USB link: PV strings, battery (SOC, voltage, power), AC output, temperatures, status, fault and warning codes, daily and total energy, inverter settings.
-- **Sends the data to your MQTT server** as one JSON message (`tele/<topic>/SENSOR`), with or without TLS. A ready-made Home Assistant package creates 35 sensors.
+- **Sends the data to your MQTT server** as one JSON message (`tele/<topic>/SENSOR`), with or without TLS. Ready-made Home Assistant packages (1 or 3 inverters) and a dashboard page.
 - **Modbus TCP gateway** on port 502: Home Assistant, Node-RED or any Modbus TCP client can read the inverter through the dongle. Requests are queued with the dongle's own reads. Writing settings is off unless you enable it.
 - **Setup hotspot** `DongleGrowatt-xxxx` on first start, to choose the Wi-Fi network from a phone.
 - **Settings page** with network (DHCP or static), MQTT with a **Test server** button, device name, admin password and Modbus options.
@@ -43,7 +43,9 @@ Full instructions: **[docs/GUIDE.en.md](docs/GUIDE.en.md)**.
 | `build/` | build settings (name, hotspot, defaults) |
 | `.github/workflows/build.yml` | tests the driver, builds the firmware, publishes it |
 | `tests/` | runs the driver against a simulated inverter |
-| `homeassistant/donglegrowatt.yaml` | Home Assistant MQTT sensors |
+| `homeassistant/packages/` | Home Assistant sensors for 1 or 3 inverters, plus summary helpers |
+| `homeassistant/dashboard/` | Home Assistant dashboard pages (1 inverter off-grid, 3 inverters with grid) |
+| `tools/ha_package.py` | generates the Home Assistant package for any number of inverters |
 | `docs/` | guide (English, Romanian) and register reference |
 
 ## Status
@@ -57,6 +59,8 @@ You modify your own hardware at your own risk. Keep the backup of the original f
 ## Credits and license
 
 Author: **Barbu Dan-Cristian**.
+
+The Home Assistant dashboard is based on the original page by **Andrei Cristetiu**.
 
 DongleGrowatt is built on the open-source [Tasmota](https://github.com/arendst/Tasmota) firmware by Theo Arends and contributors, and is released under the same **GNU GPL v3.0** license. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
 

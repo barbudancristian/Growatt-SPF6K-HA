@@ -23,6 +23,8 @@ On the SPF 6000 ES Plus, registers 52/54 (PV2 energy) stay at 0 even when PV2 pr
 | 17 | Battery voltage | U16 | 0.01 V |
 | 18 | Battery SOC | U16 | 1 % |
 | 19 | Bus voltage | U16 | 0.1 V |
+| 13 | AC charge power (grid/generator to battery) | U32 | 0.1 W |
+| 20 / 21 | Grid voltage / frequency | U16 | 0.1 V / 0.01 Hz |
 | 22 / 23 | Output voltage / frequency | U16 | 0.1 V / 0.01 Hz |
 | 25 / 26 | Inverter / DC-DC temperature | U16 | 0.1 °C |
 | 27 | Inverter load | U16 | 0.1 % |
@@ -31,6 +33,7 @@ On the SPF 6000 ES Plus, registers 52/54 (PV2 energy) stay at 0 even when PV2 pr
 | 48 / 50 | PV energy today / total (all PV inputs together) | U32 | 0.1 kWh |
 | 56 / 58 | Battery charged from AC (grid/generator) today / total | U32 | 0.1 kWh |
 | 60 / 62 | Battery discharge today / total | U32 | 0.1 kWh |
+| 64 / 66 | Load supplied from AC (bypass) today / total | U32 | 0.1 kWh |
 | 73 | Battery discharge current | U16 | 0.1 A |
 | 77 | Battery power (+ discharging, − charging) | S32 | 0.1 W |
 | 85 / 87 | Load energy today / total | U32 | 0.1 kWh |

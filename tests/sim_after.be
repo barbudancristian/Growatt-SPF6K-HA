@@ -74,3 +74,4 @@ check(v["Growatt"]["Battery"]["Power"] < 0, "battery power negative while chargi
 check(v["Growatt"]["Settings"]["BatteryType"] == "Lithium", "holding register decoded")
 check(growatt.crc16(bytes("010400000007")) == 0xC8B1, "CRC matches a real inverter request")
 check(growatt.online(), "inverter back online after a timeout")
+check(v["Growatt"]["Grid"]["Voltage"] == 223.1 && v["Growatt"]["Energy"]["ACDischargeTotal"] == 183, "grid and AC discharge decoded")

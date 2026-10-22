@@ -128,9 +128,11 @@ Every 10 seconds the dongle publishes to `tele/<topic>/SENSOR`, key `Growatt`:
  "PV1":{"Voltage":0,"Current":0,"Power":0},"PV2":{"Voltage":245.6,"Current":0.6,"Power":161},
  "Battery":{"SOC":21,"Voltage":51.9,"Power":-108.8,"DischargeCurrent":0},
  "Output":{"Voltage":231.5,"Frequency":50.04,"Current":1.3,"Power":143,"ApparentPower":312,"Load":2.4},
+ "Grid":{"Voltage":223.1,"Frequency":49.98,"ACChargePower":85},
  "Inverter":{"Temperature":24.8,"DCDCTemperature":21.8,"BusVoltage":455,"FaultCode":0,"WarningCode":0},
  "Energy":{"PVToday":0.2,"PVTotal":502.3,"LoadToday":0.4,"LoadTotal":354.8,"ACChargeToday":0,
-           "ACChargeTotal":4.1,"DischargeToday":0.3,"DischargeTotal":206.2},
+           "ACChargeTotal":4.1,"DischargeToday":0.3,"DischargeTotal":206.2,
+           "ACDischargeToday":2.7,"ACDischargeTotal":183},
  "Settings":{"OutputPriority":"SBU","ChargerPriority":"Solar only","BatteryType":"Lithium","MaxChargeCurrent":48}}}
 ```
 
@@ -138,11 +140,55 @@ Units: V, A, W, VA, Hz, °C, %, kWh. **Battery power is negative while charging 
 
 ## 10. Home Assistant
 
-1. Install the **Mosquitto broker** add-on and the **MQTT** integration, and create a Home Assistant user for the dongle.
-2. In **Dongle settings → MQTT** enter the Home Assistant address, port 1883 and that user.
-3. Copy [`homeassistant/donglegrowatt.yaml`](../homeassistant/donglegrowatt.yaml) to `<config>/packages/`, replace `growatt_ABC123` with your dongle's topic, enable packages in `configuration.yaml`, and restart Home Assistant.
+### Sensors
 
-You get a device "Growatt inverter" with 35 sensors, ready for the Energy dashboard.
+1. Install the **Mosquitto broker** add-on and the **MQTT** integration, and create a Home Assistant user for the dongles.
+2. On each dongle, in **Dongle settings → MQTT**, enter the Home Assistant address, port 1883 and that user. Note each dongle's **Topic**.
+3. Copy the package for your system to `<config>/packages/`:
+   - one inverter: [`homeassistant/packages/growatt_1_inverter.yaml`](../homeassistant/packages/growatt_1_inverter.yaml)
+   - three inverters (for example one per phase): [`homeassistant/packages/growatt_3_inverters.yaml`](../homeassistant/packages/growatt_3_inverters.yaml)
+   - any other number: `python tools/ha_package.py 2 > growatt_2_inverters.yaml`
+4. In the file, replace `growatt_INV1`, `growatt_INV2`, ... with the topics of your dongles, in the same order as the inverters.
+5. Enable packages in `configuration.yaml` and restart Home Assistant:
+   ```yaml
+   homeassistant:
+     packages: !include_dir_named packages
+   ```
+6. In **Settings → Devices & services → Helpers**, set **Growatt battery capacity** (kWh) and **Growatt battery minimum SOC** (%) once.
+
+Each inverter becomes a device "Growatt inverter N" with 41 sensors named `sensor.growatt_N_...`. The package also creates the summary sensors the dashboard uses:
+
+| Sensor | Meaning |
+| --- | --- |
+| `sensor.productie_solara_totala` | PV power of all inverters (W) |
+| `sensor.consum_casa_total` | house load, all inverters (W) |
+| `sensor.retea_putere_totala` | power taken from the grid, estimated from bypass and AC charging (W) |
+| `sensor.baterie_putere_neta` | battery power, all inverters, **positive while charging** (W) |
+| `sensor.baterie_soc_mediu` | average SOC (%) |
+| `sensor.baterie_timp_pana_goala` / `_plina` | hours until empty / full at the current power |
+| `sensor.baterie_eta_goala` / `_plina` | time of day when the battery will be empty / full |
+
+The `*_energy_total` sensors have long-term statistics, so they work in the **Energy** dashboard and in the dashboard's month view.
+
+A Home Assistant *blueprint* is not used here: template blueprints create one entity per use, while this mapping needs about 40 entities per inverter. The package (and the generator for other inverter counts) does the same job in one file.
+
+### Dashboard
+
+<p><img src="img/dashboard-3.png" width="640" alt="Dashboard, three inverters"></p>
+
+Two ready pages, with the same design:
+
+| File | For |
+| --- | --- |
+| [`homeassistant/dashboard/solar-3-inverters.html`](../homeassistant/dashboard/solar-3-inverters.html) | three inverters with grid (energy flow with grid, per-inverter cards) |
+| [`homeassistant/dashboard/solar-1-inverter.html`](../homeassistant/dashboard/solar-1-inverter.html) | one off-grid inverter (no grid node) |
+
+1. Copy the file to `<config>/www/` (for example with the File editor or Samba add-on).
+2. **Settings → Dashboards → Add dashboard → New dashboard from scratch**, give it a name.
+3. Open it, **⋮ → Edit dashboard**, edit the view: **View type: Panel (single card)**.
+4. Add a **Webpage** card with URL `/local/solar-3-inverters.html` (or `solar-1-inverter.html`).
+
+The page reads the sensors directly from Home Assistant: live energy flow, today's totals, battery time to empty/full, a card per inverter, and a chart for a day, 24 h, 48 h or a month, with savings in RON. Settings are in the `CONFIG` block at the top of the file: title, number of inverters, grid or off-grid, energy price. The solar forecast tiles use the **Forecast.Solar** integration; without it those tiles show "–".
 
 ## 11. Modbus TCP
 

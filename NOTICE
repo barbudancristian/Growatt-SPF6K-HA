@@ -14,5 +14,9 @@ dongle/ (driver scripts). The copyright notice shown at the bottom of the
 device's web pages is part of the upstream firmware and is kept as required by
 the license.
 
+The Home Assistant dashboard pages in homeassistant/dashboard/ are based on the
+original page by Andrei Cristetiu, adapted for DongleGrowatt (one or three
+inverters, grid or off-grid, single PV energy counter) by Barbu Dan-Cristian.
+
 Growatt, ShineWiFi and SPF are trademarks of their respective owners. This project
 is not affiliated with Growatt or with the upstream firmware project.

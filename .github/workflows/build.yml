@@ -26,10 +26,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out this repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Check out the firmware core
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: ${{ env.CORE_REPO }}
           ref: ${{ env.CORE_REF }}
@@ -41,7 +41,7 @@ jobs:
           tests/run.sh "$PWD/core/lib/libesp32/berry/berry"
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.13'
 
@@ -69,6 +69,12 @@ jobs:
           PYTHONUTF8: '1'
         run: platformio run -e tasmota32c3-donglegrowatt
 
+      - name: Check that the scripts are inside the image
+        run: |
+          FS=core/.pio/build/tasmota32c3-donglegrowatt/littlefs_data
+          ls -la "$FS"
+          test -f "$FS/growatt.be" && test -f "$FS/autoexec.be"
+
       - name: Collect the firmware files
         run: |
           ls -la core/build_output/firmware
@@ -80,7 +86,7 @@ jobs:
           cat out/SHA256SUMS.txt
 
       - name: Upload the firmware
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: DongleGrowatt-firmware
           path: out/

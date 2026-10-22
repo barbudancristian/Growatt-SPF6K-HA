@@ -7,7 +7,7 @@ Firmware pentru stick-ul Growatt **ShineWiFi-X2** care îl transformă într-o p
 ## Ce face
 
 - **Citește invertorul** la fiecare 10 secunde, prin legătura USB a stick-ului: panourile PV, bateria (SOC, tensiune, putere), ieșirea AC, temperaturile, starea, codurile de eroare și avertizare, energia pe zi și totală, setările invertorului.
-- **Trimite datele la serverul tău MQTT** ca un singur mesaj JSON (`tele/<topic>/SENSOR`), cu sau fără TLS. Un pachet gata făcut pentru Home Assistant creează 35 de senzori.
+- **Trimite datele la serverul tău MQTT** ca un singur mesaj JSON (`tele/<topic>/SENSOR`), cu sau fără TLS. Pachete gata făcute pentru Home Assistant (1 sau 3 invertoare) și o pagină de dashboard.
 - **Punte Modbus TCP** pe portul 502: Home Assistant, Node-RED sau orice client Modbus TCP poate citi invertorul prin dongle. Cererile sunt puse la rând cu citirile proprii ale dongle-ului. Scrierea setărilor e oprită, dacă nu o activezi.
 - **Hotspot de configurare** `DongleGrowatt-xxxx` la prima pornire, ca să alegi rețeaua Wi-Fi de pe telefon.
 - **Pagină de setări**: rețea (DHCP sau statică), MQTT cu buton **Test server**, nume, parolă de admin și opțiuni Modbus.
@@ -43,7 +43,9 @@ Instrucțiunile complete: **[docs/GHID.ro.md](docs/GHID.ro.md)**.
 | `build/` | setările de compilare (nume, hotspot, valori implicite) |
 | `.github/workflows/build.yml` | testează programul, compilează firmware-ul și îl publică |
 | `tests/` | rulează programul pe un invertor simulat |
-| `homeassistant/donglegrowatt.yaml` | senzorii MQTT pentru Home Assistant |
+| `homeassistant/packages/` | senzorii Home Assistant pentru 1 sau 3 invertoare, plus senzorii de sumar |
+| `homeassistant/dashboard/` | paginile de dashboard Home Assistant (1 invertor off-grid, 3 invertoare cu rețea) |
+| `tools/ha_package.py` | generează pachetul Home Assistant pentru orice număr de invertoare |
 | `docs/` | ghidul (română, engleză) și lista registrelor |
 
 ## Stadiu
@@ -57,6 +59,8 @@ Modifici propriul hardware, pe propriul risc. Păstrează backup-ul firmware-ulu
 ## Credite și licență
 
 Autor: **Barbu Dan-Cristian**.
+
+Dashboard-ul pentru Home Assistant e bazat pe pagina originală a lui **Andrei Cristetiu**.
 
 DongleGrowatt e construit pe firmware-ul open-source [Tasmota](https://github.com/arendst/Tasmota), de Theo Arends și colaboratorii lui, și e publicat sub aceeași licență **GNU GPL v3.0**. Vezi [LICENSE](LICENSE) și [NOTICE](NOTICE).
 
