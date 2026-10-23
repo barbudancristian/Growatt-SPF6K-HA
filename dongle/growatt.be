@@ -427,6 +427,8 @@ class GrowattDongle
       tasmota.resp_cmnd(json.dump({"GrowattSet": {"Name": name, "Value": val, "Result": "Queued"}}))
     else
       tasmota.resp_cmnd(json.dump({"GrowattSet": {"Name": name, "Value": val, "Result": "Error", "Message": err}}))
+      self.set_result(name, val, false, err)        # also visible in Home Assistant (last setting change)
+      self.publish("GROWATT_INFO", self.info())
     end
   end
 
@@ -492,6 +494,8 @@ class GrowattDongle
     end
     if err != nil
       tasmota.resp_cmnd(json.dump({"GrowattClock": {"Result": "Error", "Message": err}}))
+      self.set_result("clock", "", false, err)
+      self.publish("GROWATT_INFO", self.info())
       return
     end
     var d = tasmota.time_dump(t)
