@@ -263,9 +263,22 @@ class GrowattDongle
   # publishes on tele/<topic>/<name>
   def publish(name, v)
     if v == nil || !mqtt.connected() return end
-    var t = self.cmd_val("Topic")
+    var t = self.topic()
     if size(t) == 0 return end
     mqtt.publish(f"tele/{t}/{name}", json.dump(v))
+  end
+
+  # MQTT topic as used on the wire: the default "growatt_%06X" becomes "growatt_3000E0"
+  # (last 6 hex digits of the MAC), the same way the firmware expands it
+  def topic()
+    var t = self.cmd_val("Topic")
+    var p = string.find(t, "%06X")
+    if p >= 0
+      var mac = string.split(tasmota.wifi().find("mac", ""), ":")
+      var hex = size(mac) == 6 ? mac[3] + mac[4] + mac[5] : ""
+      t = t[0 .. p - 1] + string.toupper(hex) + t[p + 4 ..]
+    end
+    return t
   end
 
   # ---- register helpers ----

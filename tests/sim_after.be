@@ -129,4 +129,8 @@ check(json.load(PUBS["tele/growatt/GROWATT_SET"])["Result"] == "OK", "clock resu
 growatt.hold[39] = 0
 r = tasmota.run_cmd("GrowattSet", "shutdown_battery_capacity 20")
 check(r["GrowattSet"]["Result"] == "Error", "SOC thresholds refused on lead batteries")
+tasmota.st["Topic"] = "growatt_%06X"
+check(growatt.topic() == "growatt_3000E0", "default topic expanded from the MAC")
+tasmota.st["Topic"] = "pre_%06X_x"
+check(growatt.topic() == "pre_3000E0_x", "topic with text after the placeholder")
 print("ALL OK")

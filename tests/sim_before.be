@@ -98,7 +98,7 @@ class TasStub
   def is_network_up() return true end
   def response_append(s) self.resp += s end
   def web_send(s) self.sent += s end
-  def wifi() return {"ip":"192.168.1.57","up":true} end
+  def wifi() return {"ip":"192.168.1.57","up":true,"mac":"48:F6:EE:30:00:e0"} end
   def set_timer(ms, f) self.cmds.push("TIMER") end
   var ucmds, lastresp
   def add_cmd(n, f) if self.ucmds == nil self.ucmds = {} end self.ucmds[n] = f end
