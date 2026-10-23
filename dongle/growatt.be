@@ -70,7 +70,7 @@ class GrowattDongle
   # ---- Modbus TCP ----
   var srv, clients, tcp_req, tcp_err
   # ---- settings writes / extra MQTT topics ----
-  var wbusy, last_set, bms_ok, info_due
+  var wbusy, last_set, bms_ok, info_due   # info_due: MQTT was connected at the last check
 
   def init()
     self.addr      = int(persist.find("gw_addr", 1))
@@ -673,6 +673,10 @@ class GrowattDongle
 
   def every_second()
     if self.srv == nil && tasmota.is_network_up() self.start_tcp() end
+    # send the settings right after MQTT (re)connects, not only once a minute
+    var up = mqtt.connected()
+    if up && !self.info_due self.publish("GROWATT_INFO", self.info()) end
+    self.info_due = up
   end
 
   # ======================================================================
