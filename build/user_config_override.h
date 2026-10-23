@@ -28,6 +28,10 @@
 #undef  TELE_PERIOD
 #define TELE_PERIOD            10
 
+// ---- Bigger MQTT messages: the SENSOR message with all inverter values is about 1.1 kB ----
+#undef  MQTT_MAX_PACKET_SIZE
+#define MQTT_MAX_PACKET_SIZE   2048
+
 // ---- No automatic online updates from a third-party server ----
 #undef  OTA_URL
 #define OTA_URL                ""

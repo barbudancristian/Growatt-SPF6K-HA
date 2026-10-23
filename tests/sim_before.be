@@ -6,15 +6,24 @@ _now = 0
 
 # ---------------- simulated inverter ----------------
 INP = {}
-for i: 0..99 INP[i] = 0 end
+for i: 0..249 INP[i] = 0 end
 INP[0]=5 INP[1]=0 INP[2]=2456 INP[5]=0 INP[6]=1610 INP[8]=6 INP[9]=0 INP[10]=1430
 INP[11]=0 INP[12]=3120 INP[17]=5190 INP[18]=21 INP[19]=4550 INP[22]=2315 INP[23]=5004 INP[25]=248 INP[26]=218 INP[27]=24 INP[34]=13
 INP[48]=0 INP[49]=2 INP[50]=0 INP[51]=5023 INP[56]=0 INP[57]=0 INP[58]=0 INP[59]=41 INP[60]=0 INP[61]=3 INP[62]=0 INP[63]=2062
 INP[20]=2231 INP[21]=4998 INP[13]=0 INP[14]=850 INP[64]=0 INP[65]=27 INP[66]=0 INP[67]=1830
-INP[73]=0 INP[77]=0xFFFF INP[78]=0xFBC0 INP[85]=0 INP[86]=4 INP[87]=0 INP[88]=3548
+INP[73]=0 INP[74]=0 INP[83]=73 INP[84]=0 INP[36]=0 INP[37]=1234 INP[32]=319 INP[82]=13 INP[96]=0 INP[97]=0
+# BMS (inverter 1 in the documentation)
+INP[200]=103 INP[203]=25 INP[204]=5137 INP[205]=65505 INP[206]=245 INP[207]=14500 INP[208]=5600 INP[237]=100 INP[241]=0 INP[242]=192 INP[243]=3214 INP[244]=3207
+INP[77]=0xFFFF INP[78]=0xFBC0 INP[85]=0 INP[86]=4 INP[87]=0 INP[88]=3548
 HOLD = {}
-for i: 0..99 HOLD[i] = 0 end
-HOLD[1]=0 HOLD[2]=2 HOLD[34]=48 HOLD[39]=3
+for i: 0..128 HOLD[i] = 0 end
+HOLD[1]=0 HOLD[2]=2 HOLD[34]=48 HOLD[39]=3 HOLD[35]=560 HOLD[36]=560 HOLD[37]=200 HOLD[38]=30 HOLD[82]=150 HOLD[95]=250
+HOLD[8]=1 HOLD[18]=1 HOLD[22]=1 HOLD[20]=1 HOLD[21]=1 HOLD[43]=20006 HOLD[78]=0 HOLD[79]=60000
+HOLD[9]=0x3130 HOLD[10]=0x302E HOLD[11]=0x3036 HOLD[12]=0x3130 HOLD[13]=0x312E HOLD[14]=0x3035
+HOLD[23]=0x5559 HOLD[24]=0x4E36 HOLD[25]=0x4633 HOLD[26]=0x4430 HOLD[27]=0x3137
+HOLD[45]=2102 HOLD[46]=10 HOLD[47]=22 HOLD[48]=11 HOLD[49]=19 HOLD[50]=58
+REFUSE = {}
+PUBS = {}
 SER_WRITES = []
 
 def crc(b)
@@ -44,8 +53,11 @@ class serial
       var m = fc == 4 ? INP : HOLD
       r.add(fc,1) r.add(n*2,1)
       for i: 0..n-1 r.add(m.find(st+i,0),-2) end
-    elif fc == 6
+    elif fc == 6 && REFUSE.find(st) == nil
+      HOLD[st] = n
       r.add(fc,1) r.add(st,-2) r.add(n,-2)
+    elif fc == 6
+      r.add(0x86,1) r.add(3,1)
     else
       r.add(fc|0x80,1) r.add(1,1)
     end
@@ -88,6 +100,12 @@ class TasStub
   def web_send(s) self.sent += s end
   def wifi() return {"ip":"192.168.1.57","up":true} end
   def set_timer(ms, f) self.cmds.push("TIMER") end
+  var ucmds, lastresp
+  def add_cmd(n, f) if self.ucmds == nil self.ucmds = {} end self.ucmds[n] = f end
+  def resp_cmnd(s) self.lastresp = s end
+  def rtc() return {"local": 1792750000} end
+  def time_dump(t) return {"year":2026,"month":10,"day":23,"hour":14,"min":5,"sec":9} end
+  def run_cmd(n, payload) self.ucmds[n](n, 0, payload) return json.load(self.lastresp) end
   def cmd(c, mute)
     self.cmds.push(c)
     var p = string.find(c, " ")

@@ -123,7 +123,7 @@ Pe pagina principală a dongle-ului apeși **Dongle settings**. Totul e pe o sin
 | Device | **numele dispozitivului** și o **parolă nouă de admin** pentru paginile web (utilizator `admin`). Pune o parolă de la prima folosire. |
 | Network | **DHCP** (automat) sau **adresă statică**: IP, gateway, mască, DNS. La salvarea unei adrese noi, dongle-ul repornește. |
 | MQTT | server, port, utilizator, parolă, topic, plus **Use TLS** pentru brokerii criptați, cum e HiveMQ Cloud (port 8883; dongle-ul repornește). **Test server** verifică dacă dongle-ul ajunge la acel server și port; **Save** se conectează cu ele. Rândul de stare arată dacă MQTT e conectat. |
-| Inverter / Modbus | adresa Modbus a invertorului (1), intervalul de citire (10 s), portul Modbus TCP (502, 0 = oprit) și dacă clienții TCP au voie să **scrie** setări (implicit nu). |
+| Inverter / Modbus | adresa Modbus a invertorului (1), intervalul de citire (10 s), portul Modbus TCP (502, 0 = oprit), dacă clienții TCP au voie să **scrie** setări și dacă Home Assistant poate **schimba setările invertorului** prin MQTT (ambele oprite implicit). Sub căsuțe vezi ultima modificare și rezultatul ei. |
 
 Câmpurile de parolă lăsate goale păstrează parola actuală. Rețeaua Wi-Fi propriu-zisă se schimbă din **Configuration → Wi-Fi**.
 
@@ -140,17 +140,60 @@ La fiecare 10 secunde dongle-ul publică pe `tele/<topic>/SENSOR`, sub cheia `Gr
 ```json
 {"Growatt":{"Online":true,"Status":"PV charge","StatusCode":5,"PVPower":161,
  "PV1":{"Voltage":0,"Current":0,"Power":0},"PV2":{"Voltage":245.6,"Current":0.6,"Power":161},
- "Battery":{"SOC":21,"Voltage":51.9,"Power":-108.8,"DischargeCurrent":0},
+ "Battery":{"SOC":21,"Voltage":51.9,"Power":-108.8,"DischargePower":0,"ChargeCurrent":7.3,"DischargeCurrent":0,"Current":7.3},
  "Output":{"Voltage":231.5,"Frequency":50.04,"Current":1.3,"Power":143,"ApparentPower":312,"Load":2.4},
- "Grid":{"Voltage":223.1,"Frequency":49.98,"ACChargePower":85},
- "Inverter":{"Temperature":24.8,"DCDCTemperature":21.8,"BusVoltage":455,"FaultCode":0,"WarningCode":0},
+ "Grid":{"Voltage":223.1,"Frequency":49.98,"Power":0,"ApparentPower":0,"ACChargePower":85,"ACChargeCurrent":0,"BypassPower":0},
+ "Inverter":{"Temperature":24.8,"DCDCTemperature":21.8,"MPPT1Temperature":31.9,"MPPT2Temperature":30.8,"Current":1.9,
+             "BusVoltage":455,"FanMPPT":0,"FanInverter":13,"FaultBits":0,"WarningBits":0,"FaultCode":0,"WarningCode":0},
  "Energy":{"PVToday":0.2,"PVTotal":502.3,"LoadToday":0.4,"LoadTotal":354.8,"ACChargeToday":0,
            "ACChargeTotal":4.1,"DischargeToday":0.3,"DischargeTotal":206.2,
            "ACDischargeToday":2.7,"ACDischargeTotal":183},
  "Settings":{"OutputPriority":"SBU","ChargerPriority":"Solar only","BatteryType":"Lithium","MaxChargeCurrent":48}}}
 ```
 
-Unități: V, A, W, VA, Hz, °C, %, kWh. **Puterea bateriei e negativă la încărcare și pozitivă la descărcare.** `tele/<topic>/LWT` e `Online` / `Offline`. Intervalul e `TelePeriod` (implicit 10 s).
+Unități: V, A, W, VA, Hz, °C, %, kWh. **Puterea bateriei e negativă la încărcare și pozitivă la descărcare**; `Battery.Current` e pozitiv la încărcare. `tele/<topic>/LWT` e `Online` / `Offline`. Intervalul e `TelePeriod` (implicit 10 s).
+
+Încă două mesaje:
+
+- `tele/<topic>/GROWATT_INFO`, o dată pe minut: seria, firmware-ul, ceasul invertorului, puterea nominală, intrarea de generator și **toate setările** în unități reale, cu aceleași nume ca în Solar Assistant:
+  ```json
+  {"Serial":"UYN6F3D017","Firmware":"100.06","ControlFirmware":"101.05","Clock":"2026-10-23 14:05:09",
+   "RatedPower":6000,"Writable":false,"LastSet":null,
+   "Settings":{"output_source_priority":"Solar/Battery/Utility","charger_source_priority":"Solar first",
+               "max_charge_current":100,"back_to_battery_capacity":30,"battery_type":"Lithium BMS", "...": "..."}}
+  ```
+- `tele/<topic>/GROWATT_BMS`, la fiecare citire, doar de la invertorul legat la BMS-ul bateriei: SOC, SOH, tensiune, curent, temperatură, cicluri, tensiunea maximă / minimă pe celulă și diferența (mV), curentul și tensiunea de încărcare cerute de BMS, codurile de stare, eroare și avertizare.
+
+### Schimbarea setărilor invertorului
+
+Întâi bifezi **Allow inverter settings changes from Home Assistant** pe pagina de setări. Apoi trimiți pe `cmnd/<topic>/GrowattSet`:
+
+```
+output_source_priority Solar/Battery/Utility
+max_charge_current 100
+back_to_battery_capacity 30
+```
+
+Dongle-ul acceptă doar setările de mai jos, doar în limitele astea, și trimite o singură modificare odată. După scriere recitește registrul și raportează rezultatul pe `tele/<topic>/GROWATT_SET` (`"Result":"OK"` sau `"Error"` cu motivul).
+
+| Setare | Registru | Valori |
+| --- | --- | --- |
+| `output_source_priority` | H1 | Solar/Battery/Utility · Solar first · Utility first · Solar/Utility/Battery |
+| `charger_source_priority` | H2 | Solar first · Solar and utility simultaneously · Solar only |
+| `energy_priority` | H116 | Battery/Load/Utility (BLU) · Load/Battery/Utility (LBU), firmware 100.08 sau mai nou |
+| `ac_input_range` | H8 | Appliance · UPS · Generator |
+| `max_charge_current` | H34 | 10–150 A |
+| `max_grid_charge_current` / `max_generator_charge_current` | H38 / H83 | 0–80 A |
+| `battery_absorption_charge_voltage` / `battery_float_charge_voltage` | H35 / H36 | 48,0–58,4 V (folosite la tipul de baterie User) |
+| `to_grid_battery_capacity` / `back_to_battery_capacity` / `shutdown_battery_capacity` | H37 / H95 / H82 | 0–100 %, doar litiu |
+| `grid_output_start_hour` / `grid_output_stop_hour` | H3 / H4 | 0–23 |
+| `grid_charge_start_hour` / `grid_charge_stop_hour` | H5 / H6 | 0–23 |
+| `buzzer` | H22 | Off · On |
+| `overload_restart` / `overtemperature_restart` | H20 / H21 | cod brut 0–2 / 0–1 |
+
+`cmnd/<topic>/GrowattClock` pune pe ceasul invertorului (H45–H50) ora dongle-ului, luată de pe internet (NTP). Invertorul își resetează contoarele „azi” la miezul nopții lui, deci ceasul contează.
+
+Pornirea / oprirea la distanță (H0), tensiunea și frecvența de ieșire (H18, H19) și tipul bateriei (H39) se văd, dar intenționat **nu** se pot scrie: o valoare greșită poate opri ieșirea, poate strica aparatele sau poate rupe legătura cu BMS-ul. Le schimbi din panoul invertorului. La invertoare în paralel, ține setările identice pe toate.
 
 ## 10. Home Assistant
 
@@ -170,7 +213,7 @@ Unități: V, A, W, VA, Hz, °C, %, kWh. **Puterea bateriei e negativă la înc�
    ```
 6. În **Settings → Devices & services → Helpers** setezi o singură dată **Growatt battery capacity** (kWh) și **Growatt battery minimum SOC** (%).
 
-Fiecare invertor devine un dispozitiv „Growatt inverter N” cu 41 de senzori numiți `sensor.growatt_N_...`. Pachetul creează și senzorii de sumar folosiți de dashboard:
+Fiecare invertor devine un dispozitiv „Growatt inverter N” cu aproximativ 60 de senzori numiți `sensor.growatt_N_...` (plus 14 senzori BMS pe invertorul 1; pentru alt invertor folosești `python tools/ha_package.py 3 2`) și, la **Configuration**, câte un select sau number pentru fiecare setare care se poate scrie (`select.growatt_N_output_source_priority`, `number.growatt_N_max_charge_current`, ...), plus butonul **Set inverter clock**. Ele schimbă invertorul doar după ce bifezi căsuța de pe pagina de setări a dongle-ului; `sensor.growatt_N_last_setting_change` arată rezultatul ultimei modificări. Integrarea GrowSolar are o pagină **Setări** care le folosește, cu **Aplică pe toate** pentru sistemele în paralel. Pachetul creează și senzorii de sumar folosiți de dashboard:
 
 | Senzor | Ce înseamnă |
 | --- | --- |

@@ -3,6 +3,8 @@
  # - Polls the inverter over Modbus RTU (USB -> CH340 -> GPIO0 TX / GPIO1 RX, 115200 8N1)
  # - Publishes the values in the telemetry JSON (MQTT "SENSOR" message) and on the main web page
  # - Modbus TCP server (default port 502) that forwards requests to the inverter, read-only by default
+ # - Serial, firmware, clock and settings on tele/<topic>/GROWATT_INFO, BMS data on tele/<topic>/GROWATT_BMS
+ # - Commands GrowattSet <name> <value> and GrowattClock (off by default; safe list, limits, read back)
  # - "Dongle settings" web page: network (DHCP / static), MQTT (with test), device name,
  #   admin password, Modbus options
  #
@@ -15,28 +17,67 @@ import json
 import string
 import mqtt
 
-GW_STATUS = ["Standby", "-", "Discharge", "Fault", "-", "PV charge", "AC charge",
+GW_STATUS = ["Standby", "-", "Discharge", "Fault", "Firmware update", "PV charge", "AC charge",
                  "Combined charge", "Combined charge + bypass", "PV charge + bypass",
                  "AC charge + bypass", "Bypass", "PV charge + discharge"]
 GW_OUTPUT_PRIO = ["SBU", "SOL", "UTI", "SUB"]
 GW_CHARGE_PRIO = ["Solar first", "Solar + utility", "Solar only"]
 var GW_BATT_TYPE   = ["AGM", "Flooded", "User", "Lithium", "User2"]
 
+# Inverter settings published on tele/<topic>/GROWATT_INFO and writable with the
+# GrowattSet command. Names follow the ones Solar Assistant uses, so dashboards can
+# work with either source. Ranges come from the SPF 6000 ES Plus manual.
+#   [name, holding register, kind, options or min, max, scale]
+#   kind "e" = list of options (value = index), "n" = number (raw = value / scale)
+# Not writable on purpose: remote on/off (H0), output voltage and frequency (H18, H19)
+# and battery type (H39): a wrong value there can switch the output off, damage
+# appliances or stop the BMS link. They are still shown, read-only.
+GW_SETTINGS = [
+  ["output_source_priority", 1, "e", ["Solar/Battery/Utility", "Solar first", "Utility first", "Solar/Utility/Battery"]],
+  ["charger_source_priority", 2, "e", ["Solar first", "Solar and utility simultaneously", "Solar only"]],
+  ["energy_priority", 116, "e", ["Battery/Load/Utility", "Load/Battery/Utility"]],
+  ["ac_input_range", 8, "e", ["Appliance", "UPS", "Generator"]],
+  ["max_charge_current", 34, "n", 10, 150, 1],
+  ["max_grid_charge_current", 38, "n", 0, 80, 1],
+  ["max_generator_charge_current", 83, "n", 0, 80, 1],
+  ["battery_absorption_charge_voltage", 35, "n", 48, 58.4, 0.1],
+  ["battery_float_charge_voltage", 36, "n", 48, 58.4, 0.1],
+  ["to_grid_battery_capacity", 37, "n", 0, 100, 0.1],
+  ["back_to_battery_capacity", 95, "n", 0, 100, 0.1],
+  ["shutdown_battery_capacity", 82, "n", 0, 100, 0.1],
+  ["grid_output_start_hour", 3, "n", 0, 23, 1],
+  ["grid_output_stop_hour", 4, "n", 0, 23, 1],
+  ["grid_charge_start_hour", 5, "n", 0, 23, 1],
+  ["grid_charge_stop_hour", 6, "n", 0, 23, 1],
+  ["buzzer", 22, "e", ["Off", "On"]],
+  ["overload_restart", 20, "n", 0, 2, 1],
+  ["overtemperature_restart", 21, "n", 0, 1, 1],
+]
+GW_READONLY = [
+  ["remote_switch", 0, "e", ["Off", "On"]],
+  ["battery_type", 39, "e", ["AGM", "Flooded", "User", "Lithium BMS", "User 2"]],
+  ["output_voltage", 18, "e", ["208 V", "230 V", "240 V", "220 V", "100 V", "110 V", "120 V"]],
+  ["output_frequency", 19, "e", ["50 Hz", "60 Hz"]],
+]
+
 class GrowattDongle
   # ---- configuration (persisted) ----
-  var addr, poll_s, tcp_port, tcp_write, tx_pin, rx_pin, baud
+  var addr, poll_s, tcp_port, tcp_write, tx_pin, rx_pin, baud, set_write
   # ---- serial / Modbus RTU engine ----
   var ser, queue, tcpq, job, rxbuf, deadline, next_send
   # ---- data ----
   var inp, hold, last_ok, polls_ok, polls_err, next_poll, next_hold
   # ---- Modbus TCP ----
   var srv, clients, tcp_req, tcp_err
+  # ---- settings writes / extra MQTT topics ----
+  var wbusy, last_set, bms_ok, info_due
 
   def init()
     self.addr      = int(persist.find("gw_addr", 1))
     self.poll_s    = int(persist.find("gw_poll", 10))
     self.tcp_port  = int(persist.find("gw_tcp_port", 502))
     self.tcp_write = persist.find("gw_tcp_write", false)
+    self.set_write = persist.find("gw_set_write", false)
     self.tx_pin    = int(persist.find("gw_tx", 0))
     self.rx_pin    = int(persist.find("gw_rx", 1))
     self.baud      = int(persist.find("gw_baud", 115200))
@@ -56,6 +97,10 @@ class GrowattDongle
     self.clients = []
     self.tcp_req = 0
     self.tcp_err = 0
+    self.wbusy = false
+    self.last_set = nil
+    self.bms_ok = false
+    self.info_due = false
 
     try
       self.ser = serial(self.rx_pin, self.tx_pin, self.baud, serial.SERIAL_8N1)
@@ -66,6 +111,8 @@ class GrowattDongle
     end
 
     tasmota.add_driver(self)
+    tasmota.add_cmd("GrowattSet", def (cmd, idx, payload) self.cmd_set(payload) end)
+    tasmota.add_cmd("GrowattClock", def (cmd, idx, payload) self.cmd_clock() end)
     tasmota.add_fast_loop(/-> self.loop())
     if tasmota.is_network_up() self.web_add_handler() end
   end
@@ -190,11 +237,35 @@ class GrowattDongle
     self.enqueue(self.read_req(4, 45, 45), def (r)
       if !self.store(self.inp, 45, r) self.polls_err += 1 end
     end)
+    # BMS block: only the inverter wired to the BMS has values here
+    self.enqueue(self.read_req(4, 200, 50), def (r)
+      self.bms_ok = self.store(self.inp, 200, r) && (self.inp.find(203, 0) > 0 || self.inp.find(204, 0) > 0)
+      if self.bms_ok self.publish("GROWATT_BMS", self.bms()) end
+    end)
     var now = tasmota.millis()
     if now >= self.next_hold
       self.next_hold = now + 60000
-      self.enqueue(self.read_req(3, 0, 45), def (r) self.store(self.hold, 0, r) end)
+      self.read_settings()
     end
+  end
+
+  # holding 0-128 (settings, clock, serial, firmware) and the generator inputs
+  def read_settings()
+    self.enqueue(self.read_req(3, 0, 45), def (r) self.store(self.hold, 0, r) end)
+    self.enqueue(self.read_req(3, 45, 45), def (r) self.store(self.hold, 45, r) end)
+    self.enqueue(self.read_req(3, 90, 39), def (r) self.store(self.hold, 90, r) end)
+    self.enqueue(self.read_req(4, 96, 2), def (r)
+      self.store(self.inp, 96, r)
+      self.publish("GROWATT_INFO", self.info())
+    end)
+  end
+
+  # publishes on tele/<topic>/<name>
+  def publish(name, v)
+    if v == nil || !mqtt.connected() return end
+    var t = self.cmd_val("Topic")
+    if size(t) == 0 return end
+    mqtt.publish(f"tele/{t}/{name}", json.dump(v))
   end
 
   # ---- register helpers ----
@@ -218,10 +289,30 @@ class GrowattDongle
     return f"Unknown ({v})"
   end
 
+  def s16(v)
+    if v == nil return nil end
+    return v >= 0x8000 ? v - 0x10000 : v
+  end
+  def ascii(start, n)
+    var b = bytes()
+    var i = 0
+    while i < n
+      var w = self.hold.find(start + i)
+      if w == nil return nil end
+      for c: [w >> 8, w & 0xFF]
+        if c >= 0x20 && c < 0x7F b.add(c, 1) end
+      end
+      i += 1
+    end
+    return b.asstring()
+  end
+
   def values()
     if !self.online() return nil end
     var pv1 = self.sc(self.u32(3), 0.1)
     var pv2 = self.sc(self.u32(5), 0.1)
+    var chg = self.sc(self.u16(83), 0.1)
+    var dis = self.sc(self.u16(84), 0.1)
     return {
       "Status": self.pick(GW_STATUS, self.u16(0)),
       "StatusCode": self.u16(0),
@@ -229,14 +320,22 @@ class GrowattDongle
       "PV2": {"Voltage": self.sc(self.u16(2), 0.1), "Current": self.sc(self.u16(8), 0.1), "Power": pv2},
       "PVPower": (pv1 != nil && pv2 != nil) ? pv1 + pv2 : nil,
       "Battery": {"SOC": self.u16(18), "Voltage": self.sc(self.u16(17), 0.01),
-                  "Power": self.sc(self.u32(77), 0.1), "DischargeCurrent": self.sc(self.u16(73), 0.1)},
+                  "Power": self.sc(self.u32(77), 0.1), "DischargePower": self.sc(self.u32(73), 0.1),
+                  "ChargeCurrent": chg, "DischargeCurrent": dis,
+                  "Current": (chg != nil && dis != nil) ? chg - dis : nil},
       "Output": {"Voltage": self.sc(self.u16(22), 0.1), "Frequency": self.sc(self.u16(23), 0.01),
                  "Current": self.sc(self.u16(34), 0.1), "Power": self.sc(self.u32(9), 0.1),
                  "ApparentPower": self.sc(self.u32(11), 0.1), "Load": self.sc(self.u16(27), 0.1)},
       "Grid": {"Voltage": self.sc(self.u16(20), 0.1), "Frequency": self.sc(self.u16(21), 0.01),
-               "ACChargePower": self.sc(self.u32(13), 0.1)},
+               "Power": self.sc(self.u32(36), 0.1), "ApparentPower": self.sc(self.u32(38), 0.1),
+               "ACChargePower": self.sc(self.u32(13), 0.1), "ACChargeCurrent": self.sc(self.u16(68), 0.1),
+               "BypassPower": self.sc(self.u32(69), 0.1)},
       "Inverter": {"Temperature": self.sc(self.u16(25), 0.1), "DCDCTemperature": self.sc(self.u16(26), 0.1),
-                   "BusVoltage": self.sc(self.u16(19), 0.1), "FaultCode": self.u16(42), "WarningCode": self.u16(43)},
+                   "MPPT1Temperature": self.sc(self.u16(32), 0.1), "MPPT2Temperature": self.sc(self.u16(33), 0.1),
+                   "Current": self.sc(self.u16(35), 0.1), "BusVoltage": self.sc(self.u16(19), 0.1),
+                   "FanMPPT": self.u16(81), "FanInverter": self.u16(82),
+                   "FaultBits": self.u16(40), "WarningBits": self.u16(41),
+                   "FaultCode": self.u16(42), "WarningCode": self.u16(43)},
       "Energy": {"PVToday": self.sc(self.u32(48), 0.1), "PVTotal": self.sc(self.u32(50), 0.1),
                  "LoadToday": self.sc(self.u32(85), 0.1), "LoadTotal": self.sc(self.u32(87), 0.1),
                  "ACChargeToday": self.sc(self.u32(56), 0.1), "ACChargeTotal": self.sc(self.u32(58), 0.1),
@@ -247,6 +346,163 @@ class GrowattDongle
                    "BatteryType": self.pick(GW_BATT_TYPE, self.hold.find(39)),
                    "MaxChargeCurrent": self.hold.find(34)}
     }
+  end
+
+  # BMS data, only on the inverter that talks to the battery (tele/<topic>/GROWATT_BMS)
+  def bms()
+    if !self.bms_ok return nil end
+    var cmax = self.u16(243)
+    var cmin = self.u16(244)
+    return {
+      "Status": self.u16(200), "Error": self.u16(201), "Warning": self.u16(202),
+      "SOC": self.u16(203), "SOH": self.u16(237), "Voltage": self.sc(self.u16(204), 0.01),
+      "Current": self.sc(self.s16(self.u16(205)), 0.1), "Temperature": self.sc(self.s16(self.u16(206)), 0.1),
+      "MaxChargeCurrent": self.sc(self.u16(207), 0.01), "ChargeVoltage": self.sc(self.u16(208), 0.01),
+      "Cycles": self.u32(241),
+      "CellMax": self.sc(cmax, 0.001), "CellMin": self.sc(cmin, 0.001),
+      "CellDelta": (cmax != nil && cmin != nil) ? cmax - cmin : nil
+    }
+  end
+
+  # value of one setting in real units / option text, nil if unknown
+  def setting_value(st)
+    var raw = self.hold.find(st[1])
+    if raw == nil return nil end
+    if st[2] == "e"
+      return (raw >= 0 && raw < size(st[3])) ? st[3][raw] : str(raw)
+    end
+    if (st[1] == 37 || st[1] == 82 || st[1] == 95) && self.hold.find(39) != 3 return nil end   # in volts on lead batteries
+    var v = raw * st[5]
+    return st[5] < 1 ? real(format("%.1f", v)) : int(v)
+  end
+
+  # serial, firmware, clock and all settings (tele/<topic>/GROWATT_INFO, every minute)
+  def info()
+    if self.hold.find(9) == nil return nil end
+    var set = {}
+    for st: GW_SETTINGS set[st[0]] = self.setting_value(st) end
+    for st: GW_READONLY set[st[0]] = self.setting_value(st) end
+    var clock = nil
+    if self.hold.find(50) != nil
+      clock = format("%04d-%02d-%02d %02d:%02d:%02d", self.hold[45], self.hold[46], self.hold[47],
+                     self.hold[48], self.hold[49], self.hold[50])
+    end
+    return {
+      "Serial": self.ascii(23, 5), "Firmware": self.ascii(9, 3), "ControlFirmware": self.ascii(12, 3),
+      "DeviceType": self.hold.find(43), "RatedPower": self.hold.find(79) != nil ? ((self.hold[78] << 16) | self.hold[79]) / 10 : nil,
+      "Clock": clock, "Generator": {"Power": self.u16(96), "Voltage": self.sc(self.u16(97), 0.1)},
+      "Writable": self.set_write, "LastSet": self.last_set,
+      "Settings": set
+    }
+  end
+
+  # ======================================================================
+  # Settings changes: GrowattSet <name> <value>, GrowattClock
+  # ======================================================================
+  def set_result(name, val, ok, msg)
+    self.last_set = {"Name": name, "Value": val, "Result": ok ? "OK" : "Error", "Message": msg}
+    tasmota.log(f"GRW: set {name} = {val}: {msg}", 2)
+    self.publish("GROWATT_SET", self.last_set)
+  end
+
+  def cmd_set(payload)
+    var p = string.find(payload, " ")
+    var name = p > 0 ? payload[0 .. p - 1] : payload
+    var val = p > 0 ? payload[p + 1 ..] : ""
+    var err = self.write_setting(name, val)
+    if err == nil
+      tasmota.resp_cmnd(json.dump({"GrowattSet": {"Name": name, "Value": val, "Result": "Queued"}}))
+    else
+      tasmota.resp_cmnd(json.dump({"GrowattSet": {"Name": name, "Value": val, "Result": "Error", "Message": err}}))
+    end
+  end
+
+  # checks the value and queues the write; returns nil or the reason it was refused
+  def write_setting(name, val)
+    if !self.set_write return "settings changes are off (Dongle settings page)" end
+    if self.wbusy return "another change is in progress" end
+    if !self.online() return "inverter not answering" end
+    var st = nil
+    for s: GW_SETTINGS if s[0] == name st = s end end
+    if st == nil return "unknown or read-only setting" end
+    var raw = nil
+    if st[2] == "e"
+      for i: 0 .. size(st[3]) - 1
+        if string.tolower(st[3][i]) == string.tolower(val) || str(i) == val raw = i end
+      end
+      if raw == nil return "value must be one of: " + st[3].concat(", ") end
+    else
+      var n = real(val)
+      if size(val) == 0 || (n == 0 && val[0] != "0") return "value must be a number" end
+      if n < st[3] || n > st[4] return f"value must be between {st[3]} and {st[4]}" end
+      if (st[1] == 37 || st[1] == 82 || st[1] == 95) && self.hold.find(39) != 3 return "only for lithium batteries" end
+      raw = int(n / st[5] + 0.5)
+    end
+    self.write_reg(name, st[1], raw, val)
+    return nil
+  end
+
+  # FC06, then reads the register back and reports the result
+  def write_reg(name, reg, raw, val)
+    self.wbusy = true
+    var p = bytes()
+    p.add(self.addr, 1)
+    p.add(6, 1)
+    p.add(reg, -2)
+    p.add(raw, -2)
+    self.enqueue(p, def (r)
+      if r == nil || (r[1] & 0x80) != 0
+        self.wbusy = false
+        self.set_result(name, val, false, r == nil ? "no answer from the inverter" : f"refused by the inverter (code {r[2]})")
+        return
+      end
+      self.enqueue(self.read_req(3, reg, 1), def (rb)
+        self.wbusy = false
+        if self.store(self.hold, reg, rb) && self.hold[reg] == raw
+          self.set_result(name, val, true, "saved and read back")
+          self.publish("GROWATT_INFO", self.info())
+        else
+          self.set_result(name, val, false, "inverter did not keep the value")
+        end
+      end, true)
+    end, true)
+  end
+
+  # writes the dongle's local time (from NTP) into the inverter clock H45-H50
+  def cmd_clock()
+    var err = nil
+    var t = tasmota.rtc()["local"]
+    if !self.set_write err = "settings changes are off (Dongle settings page)"
+    elif self.wbusy err = "another change is in progress"
+    elif !self.online() err = "inverter not answering"
+    elif t < 1700000000 err = "dongle time not set yet (no NTP)"
+    end
+    if err != nil
+      tasmota.resp_cmnd(json.dump({"GrowattClock": {"Result": "Error", "Message": err}}))
+      return
+    end
+    var d = tasmota.time_dump(t)
+    var vals = [d["year"], d["month"], d["day"], d["hour"], d["min"], d["sec"]]
+    var txt = format("%04d-%02d-%02d %02d:%02d:%02d", vals[0], vals[1], vals[2], vals[3], vals[4], vals[5])
+    self.wbusy = true
+    var fails = []
+    var i = 0
+    while i < 6
+      var reg = 45 + i
+      var p = bytes()
+      p.add(self.addr, 1) p.add(6, 1) p.add(reg, -2) p.add(vals[i], -2)
+      var last = (i == 5)
+      self.enqueue(p, def (r)
+        if r == nil || (r[1] & 0x80) != 0 fails.push(reg) end
+        if last
+          self.wbusy = false
+          self.set_result("clock", txt, size(fails) == 0, size(fails) == 0 ? "clock set" : f"registers not written: {fails}")
+          self.read_settings()
+        end
+      end, true)
+      i += 1
+    end
+    tasmota.resp_cmnd(json.dump({"GrowattClock": {"Value": txt, "Result": "Queued"}}))
   end
 
   # telemetry (MQTT tele/<topic>/SENSOR), sent every TelePeriod
@@ -295,6 +551,12 @@ class GrowattDongle
     if s["OutputPriority"] != nil
       msg += "{s}Settings{m}" + str(s["OutputPriority"]) + " &middot; " + str(s["ChargerPriority"]) + " &middot; " + str(s["BatteryType"]) + "{e}"
     end
+    if self.bms_ok
+      var m = self.bms()
+      msg += "{s}BMS{m}" + str(m["SOC"]) + " % &middot; SOH " + str(m["SOH"]) + " % &middot; " + str(m["Cycles"]) + " cycles{e}"
+    end
+    var sn = self.ascii(23, 5)
+    if sn != nil msg += "{s}Inverter serial{m}" + self.esc(sn) + " &middot; FW " + self.esc(self.ascii(9, 3)) + "{e}" end
     msg += "{s}Modbus TCP{m}" + (self.srv != nil ? f"port {self.tcp_port}, {size(self.clients)} client(s)" : "off") + "{e}"
     tasmota.web_send(msg)
   end
@@ -486,6 +748,13 @@ class GrowattDongle
     webserver.content_send(self.field("Modbus TCP port (0 = off)", "tp", self.tcp_port, "number", "min='0' max='65535'"))
     var c_tw = self.tcp_write ? " checked" : ""
     webserver.content_send(f"<p><label><input type='checkbox' name='tw'{c_tw}> Allow Modbus TCP clients to <b>write</b> inverter settings</label></p>")
+    var c_sw = self.set_write ? " checked" : ""
+    webserver.content_send(f"<p><label><input type='checkbox' name='sw'{c_sw}> Allow inverter settings changes from Home Assistant (MQTT command <code>GrowattSet</code>)</label><br>")
+    webserver.content_send("<small>Only the settings in the dongle's safe list, within the manual's limits; each change is read back from the inverter.</small></p>")
+    if self.last_set != nil
+      var ls = self.last_set
+      webserver.content_send(f"<p><small>Last change: {self.esc(ls['Name'])} = {self.esc(ls['Value'])} &middot; {self.esc(ls['Message'])}</small></p>")
+    end
     webserver.content_send(f"<p><small>Reads OK: {self.polls_ok}, failed: {self.polls_err} &middot; TCP requests: {self.tcp_req}, no answer: {self.tcp_err}</small></p>")
     webserver.content_send("</fieldset><p></p>")
 
@@ -567,6 +836,8 @@ class GrowattDongle
     if self.poll_s < 2 self.poll_s = 2 end
     var tp = int(webserver.arg("tp"))
     self.tcp_write = webserver.has_arg("tw")
+    self.set_write = webserver.has_arg("sw")
+    persist.gw_set_write = self.set_write
     persist.gw_addr = self.addr
     persist.gw_poll = self.poll_s
     persist.gw_tcp_write = self.tcp_write

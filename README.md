@@ -6,7 +6,8 @@ Firmware for the Growatt **ShineWiFi-X2** stick that turns it into a local gatew
 
 ## What it does
 
-- **Reads the inverter** every 10 seconds over the stick's USB link: PV strings, battery (SOC, voltage, power), AC output, temperatures, status, fault and warning codes, daily and total energy, inverter settings.
+- **Reads the inverter** every 10 seconds over the stick's USB link: PV strings, battery (SOC, voltage, power, currents), grid input, AC output, temperatures, fans, status, fault and warning codes, daily and total energy; once a minute the serial number, firmware, clock and all settings; and the **BMS data** (SOH, cycles, cell voltages) on the inverter wired to the battery.
+- **Changes inverter settings** from Home Assistant (priorities, charge currents, SOC thresholds, BLU/LBU, AC input range, grid hours, clock), only after you allow it, only from a safe list within the manual's limits, and reads every value back.
 - **Sends the data to your MQTT server** as one JSON message (`tele/<topic>/SENSOR`), with or without TLS. Ready-made Home Assistant packages (1 or 3 inverters) and a dashboard page.
 - **Modbus TCP gateway** on port 502: Home Assistant, Node-RED or any Modbus TCP client can read the inverter through the dongle. Requests are queued with the dongle's own reads. Writing settings is off unless you enable it.
 - **Setup hotspot** `DongleGrowatt-xxxx` on first start, to choose the Wi-Fi network from a phone.
@@ -80,7 +81,7 @@ Full instructions: **[docs/GUIDE.en.md](docs/GUIDE.en.md)**.
 
 ## Status
 
-The driver is tested against a simulated inverter on every build (Modbus framing and CRC, decoding, TCP gateway, timeouts, settings page). Testing on a real stick and inverter is in progress; report problems under **Issues**.
+The driver is tested against a simulated inverter on every build (Modbus framing and CRC, decoding, TCP gateway, timeouts, settings page, setting changes with their limits and read-back). Register meanings were checked against a capture of three SPF 6000 ES Plus in parallel; writing settings through the dongle still needs a first test on a real inverter. Testing on a real stick and inverter is in progress; report problems under **Issues**.
 
 ## Safety
 

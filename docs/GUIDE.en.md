@@ -123,7 +123,7 @@ On the dongle's main page, press **Dongle settings**. Everything is on one page:
 | Device | **Device name**, and a new **admin password** for the web pages (user `admin`). Set a password the first time. |
 | Network | **DHCP** (automatic) or a **static address**: IP, gateway, subnet mask, DNS. Saving a new address restarts the dongle. |
 | MQTT | server, port, user, password, topic, and **Use TLS** for encrypted brokers such as HiveMQ Cloud (port 8883; restarts the dongle). **Test server** checks that the dongle can reach that server and port; **Save** connects with it. The status line shows whether MQTT is connected. |
-| Inverter / Modbus | inverter Modbus address (1), read interval (10 s), Modbus TCP port (502, 0 = off), and whether TCP clients may **write** settings (off by default). |
+| Inverter / Modbus | inverter Modbus address (1), read interval (10 s), Modbus TCP port (502, 0 = off), whether TCP clients may **write** settings, and whether Home Assistant may **change inverter settings** over MQTT (both off by default). The last change and its result are shown under the boxes. |
 
 Empty password fields keep the current password. The Wi-Fi network itself is changed from **Configuration → Wi-Fi**.
 
@@ -140,17 +140,60 @@ Every 10 seconds the dongle publishes to `tele/<topic>/SENSOR`, key `Growatt`:
 ```json
 {"Growatt":{"Online":true,"Status":"PV charge","StatusCode":5,"PVPower":161,
  "PV1":{"Voltage":0,"Current":0,"Power":0},"PV2":{"Voltage":245.6,"Current":0.6,"Power":161},
- "Battery":{"SOC":21,"Voltage":51.9,"Power":-108.8,"DischargeCurrent":0},
+ "Battery":{"SOC":21,"Voltage":51.9,"Power":-108.8,"DischargePower":0,"ChargeCurrent":7.3,"DischargeCurrent":0,"Current":7.3},
  "Output":{"Voltage":231.5,"Frequency":50.04,"Current":1.3,"Power":143,"ApparentPower":312,"Load":2.4},
- "Grid":{"Voltage":223.1,"Frequency":49.98,"ACChargePower":85},
- "Inverter":{"Temperature":24.8,"DCDCTemperature":21.8,"BusVoltage":455,"FaultCode":0,"WarningCode":0},
+ "Grid":{"Voltage":223.1,"Frequency":49.98,"Power":0,"ApparentPower":0,"ACChargePower":85,"ACChargeCurrent":0,"BypassPower":0},
+ "Inverter":{"Temperature":24.8,"DCDCTemperature":21.8,"MPPT1Temperature":31.9,"MPPT2Temperature":30.8,"Current":1.9,
+             "BusVoltage":455,"FanMPPT":0,"FanInverter":13,"FaultBits":0,"WarningBits":0,"FaultCode":0,"WarningCode":0},
  "Energy":{"PVToday":0.2,"PVTotal":502.3,"LoadToday":0.4,"LoadTotal":354.8,"ACChargeToday":0,
            "ACChargeTotal":4.1,"DischargeToday":0.3,"DischargeTotal":206.2,
            "ACDischargeToday":2.7,"ACDischargeTotal":183},
  "Settings":{"OutputPriority":"SBU","ChargerPriority":"Solar only","BatteryType":"Lithium","MaxChargeCurrent":48}}}
 ```
 
-Units: V, A, W, VA, Hz, °C, %, kWh. **Battery power is negative while charging and positive while discharging.** `tele/<topic>/LWT` is `Online` / `Offline`. The interval is the `TelePeriod` (10 s by default).
+Units: V, A, W, VA, Hz, °C, %, kWh. **Battery power is negative while charging and positive while discharging**; `Battery.Current` is positive while charging. `tele/<topic>/LWT` is `Online` / `Offline`. The interval is the `TelePeriod` (10 s by default).
+
+Two more messages:
+
+- `tele/<topic>/GROWATT_INFO`, every minute: serial number, firmware, inverter clock, rated power, generator input and **all settings** in real units, with the same names Solar Assistant uses:
+  ```json
+  {"Serial":"UYN6F3D017","Firmware":"100.06","ControlFirmware":"101.05","Clock":"2026-10-23 14:05:09",
+   "RatedPower":6000,"Writable":false,"LastSet":null,
+   "Settings":{"output_source_priority":"Solar/Battery/Utility","charger_source_priority":"Solar first",
+               "max_charge_current":100,"back_to_battery_capacity":30,"battery_type":"Lithium BMS", "...": "..."}}
+  ```
+- `tele/<topic>/GROWATT_BMS`, every read, only from the inverter wired to the battery's BMS: SOC, SOH, voltage, current, temperature, cycles, highest / lowest cell voltage and their difference (mV), the charge current and voltage the BMS asks for, status, error and warning codes.
+
+### Changing inverter settings
+
+Tick **Allow inverter settings changes from Home Assistant** on the settings page first. Then send to `cmnd/<topic>/GrowattSet`:
+
+```
+output_source_priority Solar/Battery/Utility
+max_charge_current 100
+back_to_battery_capacity 30
+```
+
+The dongle accepts only these settings, only within these limits, and sends one change at a time. After writing, it reads the register back and reports the result on `tele/<topic>/GROWATT_SET` (`"Result":"OK"` or `"Error"` with the reason).
+
+| Setting | Register | Values |
+| --- | --- | --- |
+| `output_source_priority` | H1 | Solar/Battery/Utility · Solar first · Utility first · Solar/Utility/Battery |
+| `charger_source_priority` | H2 | Solar first · Solar and utility simultaneously · Solar only |
+| `energy_priority` | H116 | Battery/Load/Utility (BLU) · Load/Battery/Utility (LBU), firmware 100.08 or newer |
+| `ac_input_range` | H8 | Appliance · UPS · Generator |
+| `max_charge_current` | H34 | 10–150 A |
+| `max_grid_charge_current` / `max_generator_charge_current` | H38 / H83 | 0–80 A |
+| `battery_absorption_charge_voltage` / `battery_float_charge_voltage` | H35 / H36 | 48.0–58.4 V (used with battery type User) |
+| `to_grid_battery_capacity` / `back_to_battery_capacity` / `shutdown_battery_capacity` | H37 / H95 / H82 | 0–100 %, lithium only |
+| `grid_output_start_hour` / `grid_output_stop_hour` | H3 / H4 | 0–23 |
+| `grid_charge_start_hour` / `grid_charge_stop_hour` | H5 / H6 | 0–23 |
+| `buzzer` | H22 | Off · On |
+| `overload_restart` / `overtemperature_restart` | H20 / H21 | raw code 0–2 / 0–1 |
+
+`cmnd/<topic>/GrowattClock` sets the inverter clock (H45–H50) to the dongle's time, which comes from the internet (NTP). The inverter resets its "today" counters at its own midnight, so the clock matters.
+
+Remote on/off (H0), output voltage and frequency (H18, H19) and battery type (H39) are shown but **not** writable on purpose: a wrong value can switch the output off, damage appliances or break the BMS link. Change them on the inverter's own panel. With parallel inverters, keep the settings the same on all of them.
 
 ## 10. Home Assistant
 
@@ -170,7 +213,7 @@ Units: V, A, W, VA, Hz, °C, %, kWh. **Battery power is negative while charging 
    ```
 6. In **Settings → Devices & services → Helpers**, set **Growatt battery capacity** (kWh) and **Growatt battery minimum SOC** (%) once.
 
-Each inverter becomes a device "Growatt inverter N" with 41 sensors named `sensor.growatt_N_...`. The package also creates the summary sensors the dashboard uses:
+Each inverter becomes a device "Growatt inverter N" with about 60 sensors named `sensor.growatt_N_...` (plus 14 BMS sensors on inverter 1; for another inverter use `python tools/ha_package.py 3 2`), and, under **Configuration**, a select or number for every writable setting (`select.growatt_N_output_source_priority`, `number.growatt_N_max_charge_current`, ...) and a **Set inverter clock** button. They only change the inverter after you tick the box on the dongle's settings page; `sensor.growatt_N_last_setting_change` shows the result of the last change. The GrowSolar integration has a **Settings** page that uses them, with **Apply to all** for parallel systems. The package also creates the summary sensors the dashboard uses:
 
 | Sensor | Meaning |
 | --- | --- |

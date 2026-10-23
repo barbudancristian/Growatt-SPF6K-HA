@@ -6,7 +6,8 @@ Firmware pentru stick-ul Growatt **ShineWiFi-X2** care îl transformă într-o p
 
 ## Ce face
 
-- **Citește invertorul** la fiecare 10 secunde, prin legătura USB a stick-ului: panourile PV, bateria (SOC, tensiune, putere), ieșirea AC, temperaturile, starea, codurile de eroare și avertizare, energia pe zi și totală, setările invertorului.
+- **Citește invertorul** la fiecare 10 secunde, prin legătura USB a stick-ului: panourile PV, bateria (SOC, tensiune, putere, curenți), intrarea din rețea, ieșirea AC, temperaturile, ventilatoarele, starea, codurile de eroare și avertizare, energia pe zi și totală; o dată pe minut seria, firmware-ul, ceasul și toate setările; plus **datele BMS** (SOH, cicluri, tensiuni pe celule) pe invertorul legat la baterie.
+- **Schimbă setările invertorului** din Home Assistant (priorități, curenți de încărcare, praguri SOC, BLU/LBU, interval intrare AC, orele rețelei, ceasul), doar după ce permiți asta, doar dintr-o listă sigură, în limitele din manual, și recitește fiecare valoare.
 - **Trimite datele la serverul tău MQTT** ca un singur mesaj JSON (`tele/<topic>/SENSOR`), cu sau fără TLS. Pachete gata făcute pentru Home Assistant (1 sau 3 invertoare) și o pagină de dashboard.
 - **Punte Modbus TCP** pe portul 502: Home Assistant, Node-RED sau orice client Modbus TCP poate citi invertorul prin dongle. Cererile sunt puse la rând cu citirile proprii ale dongle-ului. Scrierea setărilor e oprită, dacă nu o activezi.
 - **Hotspot de configurare** `DongleGrowatt-xxxx` la prima pornire, ca să alegi rețeaua Wi-Fi de pe telefon.
@@ -80,7 +81,7 @@ Instrucțiunile complete: **[docs/GHID.ro.md](docs/GHID.ro.md)**.
 
 ## Stadiu
 
-La fiecare compilare, programul e testat pe un invertor simulat (cadre Modbus și CRC, decodare, puntea TCP, timeout-uri, pagina de setări). Testarea pe un stick și un invertor reale e în curs; problemele le raportezi la **Issues**.
+La fiecare compilare, programul e testat pe un invertor simulat (cadre Modbus și CRC, decodare, puntea TCP, timeout-uri, pagina de setări, schimbarea setărilor cu limitele și recitirea lor). Semnificația registrilor a fost verificată pe o captură de la trei SPF 6000 ES Plus în paralel; scrierea setărilor prin dongle mai are nevoie de un prim test pe un invertor real. Problemele le raportezi la **Issues**.
 
 ## Siguranță
 

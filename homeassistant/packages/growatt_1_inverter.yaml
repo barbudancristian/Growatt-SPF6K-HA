@@ -13,6 +13,11 @@
 # Entities: sensor.growatt_<n>_<value> for each inverter, plus the summary sensors used by
 # the dashboard (sensor.productie_solara_totala, sensor.consum_casa_total, ...).
 # Battery power here is positive while CHARGING (the dashboard expects that).
+#
+# Settings: select.growatt_<n>_* / number.growatt_<n>_* change the inverter through the
+# dongle (command GrowattSet). They only work after ticking "Allow inverter settings
+# changes from Home Assistant" on the dongle's settings page; otherwise the dongle refuses
+# and sensor.growatt_<n>_last_setting_change shows why.
 
 input_number:
   growatt_battery_capacity:
@@ -437,6 +442,52 @@ mqtt:
         name: "Growatt inverter 1"
         manufacturer: "Growatt"
         model: "SPF (DongleGrowatt)"
+    - name: "Battery charge current"
+      unique_id: growatt_1_battery_charge_current
+      default_entity_id: sensor.growatt_1_battery_charge_current
+      state_topic: "tele/growatt_INV1/SENSOR"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Battery', {}).get('ChargeCurrent') %}{{ (v) | round(1) if v is number else none }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_INV1/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "A"
+      device_class: current
+      state_class: measurement
+      suggested_display_precision: 1
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "Battery current (+ charging)"
+      unique_id: growatt_1_battery_current
+      default_entity_id: sensor.growatt_1_battery_current
+      state_topic: "tele/growatt_INV1/SENSOR"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Battery', {}).get('Current') %}{{ (v) | round(1) if v is number else none }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_INV1/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "A"
+      device_class: current
+      state_class: measurement
+      suggested_display_precision: 1
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
     - name: "Grid voltage"
       unique_id: growatt_1_grid_voltage
       default_entity_id: sensor.growatt_1_grid_voltage
@@ -506,11 +557,80 @@ mqtt:
         name: "Growatt inverter 1"
         manufacturer: "Growatt"
         model: "SPF (DongleGrowatt)"
-    - name: "Grid power (estimate)"
+    - name: "AC charge current"
+      unique_id: growatt_1_ac_charge_current
+      default_entity_id: sensor.growatt_1_ac_charge_current
+      state_topic: "tele/growatt_INV1/SENSOR"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Grid', {}).get('ACChargeCurrent') %}{{ (v) | round(1) if v is number else none }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_INV1/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "A"
+      device_class: current
+      state_class: measurement
+      suggested_display_precision: 1
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "Grid power"
       unique_id: growatt_1_grid_power
       default_entity_id: sensor.growatt_1_grid_power
       state_topic: "tele/growatt_INV1/SENSOR"
-      value_template: "{% set g = value_json.get('Growatt', {}) %}{% set out = g.get('Output', {}).get('Power') %}{% set ac = g.get('Grid', {}).get('ACChargePower') %}{% if out is number and ac is number %}{{ ((out if g.get('StatusCode') in [8, 9, 10, 11] else 0) + ac) | round(0) | int }}{% else %}{{ none }}{% endif %}"
+      value_template: "{% set g = value_json.get('Growatt', {}) %}{% set gp = g.get('Grid', {}).get('Power') %}{% if gp is number and gp > 0 %}{{ gp | round(0) | int }}{% else %}{% set out = g.get('Output', {}).get('Power') %}{% set ac = g.get('Grid', {}).get('ACChargePower') %}{% if out is number and ac is number %}{{ ((out if g.get('StatusCode') in [8, 9, 10, 11] else 0) + ac) | round(0) | int }}{% else %}{{ none }}{% endif %}{% endif %}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_INV1/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+      suggested_display_precision: 0
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "Grid apparent power"
+      unique_id: growatt_1_grid_apparent_power
+      default_entity_id: sensor.growatt_1_grid_apparent_power
+      state_topic: "tele/growatt_INV1/SENSOR"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Grid', {}).get('ApparentPower') %}{{ (v) | round(0) | int if v is number else none }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_INV1/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "VA"
+      device_class: apparent_power
+      state_class: measurement
+      suggested_display_precision: 0
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "Grid to load power"
+      unique_id: growatt_1_bypass_power
+      default_entity_id: sensor.growatt_1_bypass_power
+      state_topic: "tele/growatt_INV1/SENSOR"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Grid', {}).get('BypassPower') %}{{ (v) | round(0) | int if v is number else none }}"
       availability_mode: all
       availability:
         - topic: "tele/growatt_INV1/LWT"
@@ -593,6 +713,119 @@ mqtt:
       device_class: voltage
       state_class: measurement
       suggested_display_precision: 1
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "MPPT 1 temperature"
+      unique_id: growatt_1_mppt1_temperature
+      default_entity_id: sensor.growatt_1_mppt1_temperature
+      state_topic: "tele/growatt_INV1/SENSOR"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Inverter', {}).get('MPPT1Temperature') %}{{ (v) | round(1) if v is number else none }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_INV1/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "°C"
+      device_class: temperature
+      state_class: measurement
+      suggested_display_precision: 1
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "MPPT 2 temperature"
+      unique_id: growatt_1_mppt2_temperature
+      default_entity_id: sensor.growatt_1_mppt2_temperature
+      state_topic: "tele/growatt_INV1/SENSOR"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Inverter', {}).get('MPPT2Temperature') %}{{ (v) | round(1) if v is number else none }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_INV1/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "°C"
+      device_class: temperature
+      state_class: measurement
+      suggested_display_precision: 1
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "Inverter current"
+      unique_id: growatt_1_inverter_current
+      default_entity_id: sensor.growatt_1_inverter_current
+      state_topic: "tele/growatt_INV1/SENSOR"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Inverter', {}).get('Current') %}{{ (v) | round(1) if v is number else none }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_INV1/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "A"
+      device_class: current
+      state_class: measurement
+      suggested_display_precision: 1
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "MPPT fan"
+      unique_id: growatt_1_fan_mppt
+      default_entity_id: sensor.growatt_1_fan_mppt
+      state_topic: "tele/growatt_INV1/SENSOR"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Inverter', {}).get('FanMPPT') %}{{ (v) | round(0) | int if v is number else none }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_INV1/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "%"
+      state_class: measurement
+      suggested_display_precision: 0
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "Inverter fan"
+      unique_id: growatt_1_fan_inverter
+      default_entity_id: sensor.growatt_1_fan_inverter
+      state_topic: "tele/growatt_INV1/SENSOR"
+      value_template: "{% set v = value_json.get('Growatt', {}).get('Inverter', {}).get('FanInverter') %}{{ (v) | round(0) | int if v is number else none }}"
+      availability_mode: all
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+        - topic: "tele/growatt_INV1/SENSOR"
+          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "%"
+      state_class: measurement
+      suggested_display_precision: 0
       device:
         identifiers: ["growatt_inverter_1"]
         name: "Growatt inverter 1"
@@ -923,23 +1156,864 @@ mqtt:
         name: "Growatt inverter 1"
         manufacturer: "Growatt"
         model: "SPF (DongleGrowatt)"
-    - name: "Max charge current"
-      unique_id: growatt_1_max_charge_current
-      default_entity_id: sensor.growatt_1_max_charge_current
-      state_topic: "tele/growatt_INV1/SENSOR"
-      value_template: "{% set v = value_json.get('Growatt', {}).get('Settings', {}).get('MaxChargeCurrent') %}{{ (v) | round(0) | int if v is number else none }}"
-      availability_mode: all
+    - name: "Serial number"
+      unique_id: growatt_1_serial_number
+      default_entity_id: sensor.growatt_1_serial_number
+      state_topic: "tele/growatt_INV1/GROWATT_INFO"
+      value_template: "{{ value_json.get('Serial') }}"
+      entity_category: diagnostic
       availability:
         - topic: "tele/growatt_INV1/LWT"
           payload_available: "Online"
           payload_not_available: "Offline"
-        - topic: "tele/growatt_INV1/SENSOR"
-          value_template: "{{ 'Online' if value_json.get('Growatt', {}).get('Online') else 'Offline' }}"
+      icon: mdi:identifier
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "Firmware"
+      unique_id: growatt_1_firmware
+      default_entity_id: sensor.growatt_1_firmware
+      state_topic: "tele/growatt_INV1/GROWATT_INFO"
+      value_template: "{{ value_json.get('Firmware') }}"
+      entity_category: diagnostic
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      icon: mdi:chip
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "Control firmware"
+      unique_id: growatt_1_control_firmware
+      default_entity_id: sensor.growatt_1_control_firmware
+      state_topic: "tele/growatt_INV1/GROWATT_INFO"
+      value_template: "{{ value_json.get('ControlFirmware') }}"
+      entity_category: diagnostic
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      icon: mdi:chip
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "Inverter clock"
+      unique_id: growatt_1_inverter_clock
+      default_entity_id: sensor.growatt_1_inverter_clock
+      state_topic: "tele/growatt_INV1/GROWATT_INFO"
+      value_template: "{{ value_json.get('Clock') }}"
+      entity_category: diagnostic
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      icon: mdi:clock-outline
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "Rated power"
+      unique_id: growatt_1_rated_power
+      default_entity_id: sensor.growatt_1_rated_power
+      state_topic: "tele/growatt_INV1/GROWATT_INFO"
+      value_template: "{{ value_json.get('RatedPower') }}"
+      entity_category: diagnostic
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "W"
+      device_class: power
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "Generator power"
+      unique_id: growatt_1_generator_power
+      default_entity_id: sensor.growatt_1_generator_power
+      state_topic: "tele/growatt_INV1/GROWATT_INFO"
+      value_template: "{{ value_json.get('Generator', {}).get('Power') }}"
+      entity_category: diagnostic
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "W"
+      device_class: power
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "Generator voltage"
+      unique_id: growatt_1_generator_voltage
+      default_entity_id: sensor.growatt_1_generator_voltage
+      state_topic: "tele/growatt_INV1/GROWATT_INFO"
+      value_template: "{{ value_json.get('Generator', {}).get('Voltage') }}"
+      entity_category: diagnostic
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "V"
+      device_class: voltage
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "Remote switch"
+      unique_id: growatt_1_setting_remote_switch
+      default_entity_id: sensor.growatt_1_setting_remote_switch
+      state_topic: "tele/growatt_INV1/GROWATT_INFO"
+      value_template: "{{ value_json.get('Settings', {}).get('remote_switch') }}"
+      entity_category: diagnostic
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      icon: mdi:power
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "Output voltage setting"
+      unique_id: growatt_1_setting_output_voltage
+      default_entity_id: sensor.growatt_1_setting_output_voltage
+      state_topic: "tele/growatt_INV1/GROWATT_INFO"
+      value_template: "{{ value_json.get('Settings', {}).get('output_voltage') }}"
+      entity_category: diagnostic
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      icon: mdi:sine-wave
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "Output frequency setting"
+      unique_id: growatt_1_setting_output_frequency
+      default_entity_id: sensor.growatt_1_setting_output_frequency
+      state_topic: "tele/growatt_INV1/GROWATT_INFO"
+      value_template: "{{ value_json.get('Settings', {}).get('output_frequency') }}"
+      entity_category: diagnostic
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      icon: mdi:sine-wave
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "Last setting change"
+      unique_id: growatt_1_last_setting_change
+      default_entity_id: sensor.growatt_1_last_setting_change
+      state_topic: "tele/growatt_INV1/GROWATT_INFO"
+      value_template: "{{ value_json.get('LastSet', {}).get('Message') }}"
+      entity_category: diagnostic
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      icon: mdi:history
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "BMS SOC"
+      unique_id: growatt_1_bms_soc
+      default_entity_id: sensor.growatt_1_bms_soc
+      state_topic: "tele/growatt_INV1/GROWATT_BMS"
+      value_template: "{% set v = value_json.get('SOC') %}{{ (v) | round(0) | int if v is number else none }}"
+      expire_after: 120
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "%"
+      device_class: battery
+      state_class: measurement
+      suggested_display_precision: 0
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "BMS state of health"
+      unique_id: growatt_1_bms_soh
+      default_entity_id: sensor.growatt_1_bms_soh
+      state_topic: "tele/growatt_INV1/GROWATT_BMS"
+      value_template: "{% set v = value_json.get('SOH') %}{{ (v) | round(0) | int if v is number else none }}"
+      expire_after: 120
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "%"
+      state_class: measurement
+      suggested_display_precision: 0
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "BMS voltage"
+      unique_id: growatt_1_bms_voltage
+      default_entity_id: sensor.growatt_1_bms_voltage
+      state_topic: "tele/growatt_INV1/GROWATT_BMS"
+      value_template: "{% set v = value_json.get('Voltage') %}{{ (v) | round(2) if v is number else none }}"
+      expire_after: 120
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "V"
+      device_class: voltage
+      state_class: measurement
+      suggested_display_precision: 2
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "BMS current"
+      unique_id: growatt_1_bms_current
+      default_entity_id: sensor.growatt_1_bms_current
+      state_topic: "tele/growatt_INV1/GROWATT_BMS"
+      value_template: "{% set v = value_json.get('Current') %}{{ (v) | round(1) if v is number else none }}"
+      expire_after: 120
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
           payload_available: "Online"
           payload_not_available: "Offline"
       unit_of_measurement: "A"
       device_class: current
+      state_class: measurement
+      suggested_display_precision: 1
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "BMS temperature"
+      unique_id: growatt_1_bms_temperature
+      default_entity_id: sensor.growatt_1_bms_temperature
+      state_topic: "tele/growatt_INV1/GROWATT_BMS"
+      value_template: "{% set v = value_json.get('Temperature') %}{{ (v) | round(1) if v is number else none }}"
+      expire_after: 120
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "°C"
+      device_class: temperature
+      state_class: measurement
+      suggested_display_precision: 1
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "BMS cycles"
+      unique_id: growatt_1_bms_cycles
+      default_entity_id: sensor.growatt_1_bms_cycles
+      state_topic: "tele/growatt_INV1/GROWATT_BMS"
+      value_template: "{% set v = value_json.get('Cycles') %}{{ (v) | round(0) | int if v is number else none }}"
+      expire_after: 120
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      state_class: total_increasing
       suggested_display_precision: 0
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "Highest cell voltage"
+      unique_id: growatt_1_bms_cell_max
+      default_entity_id: sensor.growatt_1_bms_cell_max
+      state_topic: "tele/growatt_INV1/GROWATT_BMS"
+      value_template: "{% set v = value_json.get('CellMax') %}{{ (v) | round(3) if v is number else none }}"
+      expire_after: 120
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "V"
+      device_class: voltage
+      state_class: measurement
+      suggested_display_precision: 3
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "Lowest cell voltage"
+      unique_id: growatt_1_bms_cell_min
+      default_entity_id: sensor.growatt_1_bms_cell_min
+      state_topic: "tele/growatt_INV1/GROWATT_BMS"
+      value_template: "{% set v = value_json.get('CellMin') %}{{ (v) | round(3) if v is number else none }}"
+      expire_after: 120
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "V"
+      device_class: voltage
+      state_class: measurement
+      suggested_display_precision: 3
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "Cell voltage difference"
+      unique_id: growatt_1_bms_cell_delta
+      default_entity_id: sensor.growatt_1_bms_cell_delta
+      state_topic: "tele/growatt_INV1/GROWATT_BMS"
+      value_template: "{% set v = value_json.get('CellDelta') %}{{ (v / 1000) | round(3) if v is number else none }}"
+      expire_after: 120
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "V"
+      device_class: voltage
+      state_class: measurement
+      suggested_display_precision: 3
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "BMS max charge current"
+      unique_id: growatt_1_bms_max_charge_current
+      default_entity_id: sensor.growatt_1_bms_max_charge_current
+      state_topic: "tele/growatt_INV1/GROWATT_BMS"
+      value_template: "{% set v = value_json.get('MaxChargeCurrent') %}{{ (v) | round(1) if v is number else none }}"
+      expire_after: 120
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "A"
+      device_class: current
+      state_class: measurement
+      suggested_display_precision: 1
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "BMS charge voltage"
+      unique_id: growatt_1_bms_charge_voltage
+      default_entity_id: sensor.growatt_1_bms_charge_voltage
+      state_topic: "tele/growatt_INV1/GROWATT_BMS"
+      value_template: "{% set v = value_json.get('ChargeVoltage') %}{{ (v) | round(2) if v is number else none }}"
+      expire_after: 120
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "V"
+      device_class: voltage
+      state_class: measurement
+      suggested_display_precision: 2
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "BMS status code"
+      unique_id: growatt_1_bms_status
+      default_entity_id: sensor.growatt_1_bms_status
+      state_topic: "tele/growatt_INV1/GROWATT_BMS"
+      value_template: "{% set v = value_json.get('Status') %}{{ v if v is number else none }}"
+      expire_after: 120
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "BMS error code"
+      unique_id: growatt_1_bms_error
+      default_entity_id: sensor.growatt_1_bms_error
+      state_topic: "tele/growatt_INV1/GROWATT_BMS"
+      value_template: "{% set v = value_json.get('Error') %}{{ v if v is number else none }}"
+      expire_after: 120
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "BMS warning code"
+      unique_id: growatt_1_bms_warning
+      default_entity_id: sensor.growatt_1_bms_warning
+      state_topic: "tele/growatt_INV1/GROWATT_BMS"
+      value_template: "{% set v = value_json.get('Warning') %}{{ v if v is number else none }}"
+      expire_after: 120
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+  select:
+    - name: "Output source priority"
+      unique_id: growatt_1_output_source_priority
+      default_entity_id: select.growatt_1_output_source_priority
+      state_topic: "tele/growatt_INV1/GROWATT_INFO"
+      value_template: "{{ value_json.Settings.output_source_priority }}"
+      command_topic: "cmnd/growatt_INV1/GrowattSet"
+      command_template: "output_source_priority {{ value }}"
+      options:
+        - "Solar/Battery/Utility"
+        - "Solar first"
+        - "Utility first"
+        - "Solar/Utility/Battery"
+      entity_category: config
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "Charger source priority"
+      unique_id: growatt_1_charger_source_priority
+      default_entity_id: select.growatt_1_charger_source_priority
+      state_topic: "tele/growatt_INV1/GROWATT_INFO"
+      value_template: "{{ value_json.Settings.charger_source_priority }}"
+      command_topic: "cmnd/growatt_INV1/GrowattSet"
+      command_template: "charger_source_priority {{ value }}"
+      options:
+        - "Solar first"
+        - "Solar and utility simultaneously"
+        - "Solar only"
+      entity_category: config
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "Energy priority (BLU/LBU)"
+      unique_id: growatt_1_energy_priority
+      default_entity_id: select.growatt_1_energy_priority
+      state_topic: "tele/growatt_INV1/GROWATT_INFO"
+      value_template: "{{ value_json.Settings.energy_priority }}"
+      command_topic: "cmnd/growatt_INV1/GrowattSet"
+      command_template: "energy_priority {{ value }}"
+      options:
+        - "Battery/Load/Utility"
+        - "Load/Battery/Utility"
+      entity_category: config
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "AC input range"
+      unique_id: growatt_1_ac_input_range
+      default_entity_id: select.growatt_1_ac_input_range
+      state_topic: "tele/growatt_INV1/GROWATT_INFO"
+      value_template: "{{ value_json.Settings.ac_input_range }}"
+      command_topic: "cmnd/growatt_INV1/GrowattSet"
+      command_template: "ac_input_range {{ value }}"
+      options:
+        - "Appliance"
+        - "UPS"
+        - "Generator"
+      entity_category: config
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "Buzzer"
+      unique_id: growatt_1_buzzer
+      default_entity_id: select.growatt_1_buzzer
+      state_topic: "tele/growatt_INV1/GROWATT_INFO"
+      value_template: "{{ value_json.Settings.buzzer }}"
+      command_topic: "cmnd/growatt_INV1/GrowattSet"
+      command_template: "buzzer {{ value }}"
+      options:
+        - "Off"
+        - "On"
+      entity_category: config
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+  number:
+    - name: "Max charge current"
+      unique_id: growatt_1_max_charge_current
+      default_entity_id: number.growatt_1_max_charge_current
+      state_topic: "tele/growatt_INV1/GROWATT_INFO"
+      value_template: "{{ value_json.Settings.max_charge_current }}"
+      command_topic: "cmnd/growatt_INV1/GrowattSet"
+      command_template: "max_charge_current {{ value }}"
+      min: 10
+      max: 150
+      step: 1
+      mode: box
+      entity_category: config
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "A"
+      device_class: current
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "Max grid charge current"
+      unique_id: growatt_1_max_grid_charge_current
+      default_entity_id: number.growatt_1_max_grid_charge_current
+      state_topic: "tele/growatt_INV1/GROWATT_INFO"
+      value_template: "{{ value_json.Settings.max_grid_charge_current }}"
+      command_topic: "cmnd/growatt_INV1/GrowattSet"
+      command_template: "max_grid_charge_current {{ value }}"
+      min: 0
+      max: 80
+      step: 1
+      mode: box
+      entity_category: config
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "A"
+      device_class: current
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "Max generator charge current"
+      unique_id: growatt_1_max_generator_charge_current
+      default_entity_id: number.growatt_1_max_generator_charge_current
+      state_topic: "tele/growatt_INV1/GROWATT_INFO"
+      value_template: "{{ value_json.Settings.max_generator_charge_current }}"
+      command_topic: "cmnd/growatt_INV1/GrowattSet"
+      command_template: "max_generator_charge_current {{ value }}"
+      min: 0
+      max: 80
+      step: 1
+      mode: box
+      entity_category: config
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "A"
+      device_class: current
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "Absorption (bulk) charge voltage"
+      unique_id: growatt_1_battery_absorption_charge_voltage
+      default_entity_id: number.growatt_1_battery_absorption_charge_voltage
+      state_topic: "tele/growatt_INV1/GROWATT_INFO"
+      value_template: "{{ value_json.Settings.battery_absorption_charge_voltage }}"
+      command_topic: "cmnd/growatt_INV1/GrowattSet"
+      command_template: "battery_absorption_charge_voltage {{ value }}"
+      min: 48
+      max: 58.4
+      step: 0.1
+      mode: box
+      entity_category: config
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "V"
+      device_class: voltage
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "Float charge voltage"
+      unique_id: growatt_1_battery_float_charge_voltage
+      default_entity_id: number.growatt_1_battery_float_charge_voltage
+      state_topic: "tele/growatt_INV1/GROWATT_INFO"
+      value_template: "{{ value_json.Settings.battery_float_charge_voltage }}"
+      command_topic: "cmnd/growatt_INV1/GrowattSet"
+      command_template: "battery_float_charge_voltage {{ value }}"
+      min: 48
+      max: 58.4
+      step: 0.1
+      mode: box
+      entity_category: config
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "V"
+      device_class: voltage
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "Switch to grid at SOC"
+      unique_id: growatt_1_to_grid_battery_capacity
+      default_entity_id: number.growatt_1_to_grid_battery_capacity
+      state_topic: "tele/growatt_INV1/GROWATT_INFO"
+      value_template: "{{ value_json.Settings.to_grid_battery_capacity }}"
+      command_topic: "cmnd/growatt_INV1/GrowattSet"
+      command_template: "to_grid_battery_capacity {{ value }}"
+      min: 0
+      max: 100
+      step: 1
+      mode: box
+      entity_category: config
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "%"
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "Back to battery at SOC"
+      unique_id: growatt_1_back_to_battery_capacity
+      default_entity_id: number.growatt_1_back_to_battery_capacity
+      state_topic: "tele/growatt_INV1/GROWATT_INFO"
+      value_template: "{{ value_json.Settings.back_to_battery_capacity }}"
+      command_topic: "cmnd/growatt_INV1/GrowattSet"
+      command_template: "back_to_battery_capacity {{ value }}"
+      min: 0
+      max: 100
+      step: 1
+      mode: box
+      entity_category: config
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "%"
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "Battery cut-off at SOC"
+      unique_id: growatt_1_shutdown_battery_capacity
+      default_entity_id: number.growatt_1_shutdown_battery_capacity
+      state_topic: "tele/growatt_INV1/GROWATT_INFO"
+      value_template: "{{ value_json.Settings.shutdown_battery_capacity }}"
+      command_topic: "cmnd/growatt_INV1/GrowattSet"
+      command_template: "shutdown_battery_capacity {{ value }}"
+      min: 0
+      max: 100
+      step: 1
+      mode: box
+      entity_category: config
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "%"
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "Grid output start hour"
+      unique_id: growatt_1_grid_output_start_hour
+      default_entity_id: number.growatt_1_grid_output_start_hour
+      state_topic: "tele/growatt_INV1/GROWATT_INFO"
+      value_template: "{{ value_json.Settings.grid_output_start_hour }}"
+      command_topic: "cmnd/growatt_INV1/GrowattSet"
+      command_template: "grid_output_start_hour {{ value }}"
+      min: 0
+      max: 23
+      step: 1
+      mode: box
+      entity_category: config
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "h"
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "Grid output stop hour"
+      unique_id: growatt_1_grid_output_stop_hour
+      default_entity_id: number.growatt_1_grid_output_stop_hour
+      state_topic: "tele/growatt_INV1/GROWATT_INFO"
+      value_template: "{{ value_json.Settings.grid_output_stop_hour }}"
+      command_topic: "cmnd/growatt_INV1/GrowattSet"
+      command_template: "grid_output_stop_hour {{ value }}"
+      min: 0
+      max: 23
+      step: 1
+      mode: box
+      entity_category: config
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "h"
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "Grid charge start hour"
+      unique_id: growatt_1_grid_charge_start_hour
+      default_entity_id: number.growatt_1_grid_charge_start_hour
+      state_topic: "tele/growatt_INV1/GROWATT_INFO"
+      value_template: "{{ value_json.Settings.grid_charge_start_hour }}"
+      command_topic: "cmnd/growatt_INV1/GrowattSet"
+      command_template: "grid_charge_start_hour {{ value }}"
+      min: 0
+      max: 23
+      step: 1
+      mode: box
+      entity_category: config
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "h"
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "Grid charge stop hour"
+      unique_id: growatt_1_grid_charge_stop_hour
+      default_entity_id: number.growatt_1_grid_charge_stop_hour
+      state_topic: "tele/growatt_INV1/GROWATT_INFO"
+      value_template: "{{ value_json.Settings.grid_charge_stop_hour }}"
+      command_topic: "cmnd/growatt_INV1/GrowattSet"
+      command_template: "grid_charge_stop_hour {{ value }}"
+      min: 0
+      max: 23
+      step: 1
+      mode: box
+      entity_category: config
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      unit_of_measurement: "h"
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "Overload restart (code)"
+      unique_id: growatt_1_overload_restart
+      default_entity_id: number.growatt_1_overload_restart
+      state_topic: "tele/growatt_INV1/GROWATT_INFO"
+      value_template: "{{ value_json.Settings.overload_restart }}"
+      command_topic: "cmnd/growatt_INV1/GrowattSet"
+      command_template: "overload_restart {{ value }}"
+      min: 0
+      max: 2
+      step: 1
+      mode: box
+      entity_category: config
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+    - name: "Over-temperature restart (code)"
+      unique_id: growatt_1_overtemperature_restart
+      default_entity_id: number.growatt_1_overtemperature_restart
+      state_topic: "tele/growatt_INV1/GROWATT_INFO"
+      value_template: "{{ value_json.Settings.overtemperature_restart }}"
+      command_topic: "cmnd/growatt_INV1/GrowattSet"
+      command_template: "overtemperature_restart {{ value }}"
+      min: 0
+      max: 1
+      step: 1
+      mode: box
+      entity_category: config
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
+      device:
+        identifiers: ["growatt_inverter_1"]
+        name: "Growatt inverter 1"
+        manufacturer: "Growatt"
+        model: "SPF (DongleGrowatt)"
+  button:
+    - name: "Set inverter clock"
+      unique_id: growatt_1_sync_clock
+      default_entity_id: button.growatt_1_sync_clock
+      command_topic: "cmnd/growatt_INV1/GrowattClock"
+      icon: mdi:clock-check-outline
+      entity_category: config
+      availability:
+        - topic: "tele/growatt_INV1/LWT"
+          payload_available: "Online"
+          payload_not_available: "Offline"
       device:
         identifiers: ["growatt_inverter_1"]
         name: "Growatt inverter 1"
