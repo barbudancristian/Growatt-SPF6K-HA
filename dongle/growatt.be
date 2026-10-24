@@ -371,7 +371,7 @@ class GrowattDongle
       "SOC": self.u16(203), "SOH": self.u16(237), "Voltage": self.sc(self.u16(204), 0.01),
       "Current": self.sc(self.s16(self.u16(205)), 0.1), "Temperature": self.sc(self.s16(self.u16(206)), 0.1),
       "MaxChargeCurrent": self.sc(self.u16(207), 0.01), "ChargeVoltage": self.sc(self.u16(208), 0.01),
-      "Cycles": self.u32(241),
+      "Cycles": self.u16(242),     # 241 and 242 are separate counters; 242 matches Solar Assistant and the BMS
       "CellMax": self.sc(cmax, 0.001), "CellMin": self.sc(cmin, 0.001),
       "CellDelta": (cmax != nil && cmin != nil) ? cmax - cmin : nil
     }

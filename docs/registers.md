@@ -68,7 +68,7 @@ Status codes (register 0): 0 Standby · 2 Discharge · 3 Fault · 4 Firmware upd
 | 206 | Temperature | 0.1 °C |
 | 207 / 208 | Charge current / voltage asked by the BMS | 0.01 A / 0.01 V |
 | 237 | State of health | 1 % |
-| 241 | Cycles (U32) | 1 |
+| 241 / 242 | Two cycle counters (242 matches the BMS and Solar Assistant) | 1 |
 | 243 / 244 | Highest / lowest cell voltage | 1 mV |
 
 ## Holding registers (function 03)
