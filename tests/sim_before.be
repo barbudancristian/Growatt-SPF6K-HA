@@ -24,6 +24,8 @@ HOLD[23]=0x5559 HOLD[24]=0x4E36 HOLD[25]=0x4633 HOLD[26]=0x4430 HOLD[27]=0x3137
 HOLD[45]=2102 HOLD[46]=10 HOLD[47]=22 HOLD[48]=11 HOLD[49]=19 HOLD[50]=58
 REFUSE = {}
 REFUSE16 = false
+CLOCK_LAG = 0
+PENDING16 = nil
 PUBS = {}
 SER_WRITES = []
 
@@ -50,6 +52,10 @@ class serial
     var a = f[0] var fc = f[1] var st = f.get(2,-2) var n = f.get(4,-2)
     var r = bytes()
     r.add(a,1)
+    if PENDING16 != nil && _now >= PENDING16[0]
+      for i: 0..size(PENDING16[2])-1 HOLD[PENDING16[1]+i] = PENDING16[2][i] end
+      PENDING16 = nil
+    end
     if fc == 3 || fc == 4
       var m = fc == 4 ? INP : HOLD
       r.add(fc,1) r.add(n*2,1)
@@ -60,7 +66,9 @@ class serial
     elif fc == 6
       r.add(0x86,1) r.add(3,1)
     elif fc == 16 && !REFUSE16
-      for i: 0..n-1 HOLD[st+i] = f.get(7+2*i,-2) end
+      # CLOCK_LAG: the inverter applies the block that many ms after acknowledging it
+      PENDING16 = [_now + CLOCK_LAG, st, []]
+      for i: 0..n-1 PENDING16[2].push(f.get(7+2*i,-2)) end
       r.add(fc,1) r.add(st,-2) r.add(n,-2)
     else
       r.add(fc|0x80,1) r.add(1,1)

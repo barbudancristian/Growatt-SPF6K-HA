@@ -123,16 +123,24 @@ r = tasmota.run_cmd("GrowattSet", "max_grid_charge_current 40")
 run(300)
 check(HOLD[38] == 30 && json.load(PUBS["tele/growatt/GROWATT_SET"])["Result"] == "Error", "inverter refusal reported")
 r = tasmota.run_cmd("GrowattClock", "")
-run(500)
+run(4000)
 check(HOLD[45] == 2026 && HOLD[46] == 10 && HOLD[47] == 23 && HOLD[48] == 14 && HOLD[50] == 9, "clock written")
 check(json.load(PUBS["tele/growatt/GROWATT_SET"])["Result"] == "OK", "clock result")
 var fc16 = 0
 for w: SER_WRITES if w[1] == 16 fc16 += 1 end end
 check(fc16 == 1, "clock written as one block (FC16)")
 HOLD[45]=2040 HOLD[46]=2 HOLD[47]=25 HOLD[48]=11 HOLD[49]=20 HOLD[50]=9
+HOLD[45]=2102 HOLD[46]=10 HOLD[47]=25 HOLD[48]=11 HOLD[49]=16 HOLD[50]=32
+CLOCK_LAG = 6000
+r = tasmota.run_cmd("GrowattClock", "")
+run(20000)
+ls = json.load(PUBS["tele/growatt/GROWATT_SET"])
+check(HOLD[45] == 2026 && HOLD[47] == 23 && ls["Result"] == "OK" && string.find(ls["Message"], "attempt") < 0, "clock applied a few seconds late is read again, not rewritten")
+CLOCK_LAG = 0
+HOLD[45]=2040 HOLD[46]=2 HOLD[47]=25 HOLD[48]=11 HOLD[49]=20 HOLD[50]=9
 REFUSE16 = true
 r = tasmota.run_cmd("GrowattClock", "")
-run(6000)
+run(20000)
 check(HOLD[45] == 2026 && HOLD[46] == 10 && HOLD[47] == 23 && HOLD[48] == 14 && HOLD[49] == 5, "clock falls back to single writes when FC16 is refused")
 ls = json.load(PUBS["tele/growatt/GROWATT_SET"])
 check(ls["Result"] == "OK" && string.find(ls["Message"], "attempt 2") >= 0, "fallback reported")
@@ -140,7 +148,7 @@ REFUSE16 = false
 REFUSE[47] = true
 REFUSE16 = true
 r = tasmota.run_cmd("GrowattClock", "")
-run(8000)
+run(45000)
 check(json.load(PUBS["tele/growatt/GROWATT_SET"])["Result"] == "Error", "clock error when nothing works")
 REFUSE.remove(47)
 REFUSE16 = false

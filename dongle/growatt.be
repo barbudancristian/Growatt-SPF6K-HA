@@ -486,7 +486,7 @@ class GrowattDongle
   # writes the dongle's local time (from NTP) into the inverter clock H45-H50.
   # The SPF ES Plus acknowledges six single writes (FC06) sent back to back but keeps only
   # one of them, so the clock goes in as one block (FC16), is read back and compared.
-  # Attempts: 1 block, 2 single writes 0.6 s apart, 3 block again.
+  # Attempts: 1 block, 2 single writes 0.6 s apart, 3 block again (each one read back).
   def cmd_clock()
     var err = nil
     if !self.set_write err = "settings changes are off (Dongle settings page)"
@@ -550,8 +550,13 @@ class GrowattDongle
     return txt
   end
 
-  # reads H45-H50 back; the date must match and the time be within a few seconds
-  def clock_check(attempt, vals, werr)
+  # reads H45-H50 back; the date must match and the time be within a few seconds.
+  # The inverter applies a new clock a few seconds after it acknowledges the write,
+  # so the first read waits 3 s and a mismatch is read again twice (5 s apart)
+  # before the clock is written again.
+  def clock_check(attempt, vals, werr, reads)
+    if reads == nil reads = 0 end
+    if werr == nil self.next_send = tasmota.millis() + (reads == 0 ? 3000 : 5000) end
     self.enqueue(self.read_req(3, 45, 6), def (rb)
       var msg = werr
       if msg == nil
@@ -561,12 +566,16 @@ class GrowattDongle
           var h = self.hold
           var ok = h[45] == vals[0] && h[46] == vals[1] && h[47] == vals[2]
           var dt = (h[48] * 3600 + h[49] * 60 + h[50]) - (vals[3] * 3600 + vals[4] * 60 + vals[5])
-          if !ok || dt < -2 || dt > 20
+          if !ok || dt < -2 || dt > 30
             msg = "inverter kept " + self.clock_txt([h[45], h[46], h[47], h[48], h[49], h[50]])
           end
         end
       end
       var txt = self.clock_txt(vals)
+      if msg != nil && werr == nil && reads < 2
+        self.clock_check(attempt, vals, nil, reads + 1)
+        return
+      end
       if msg == nil
         self.wbusy = false
         self.set_result("clock", txt, true, attempt == 1 ? "clock set and read back" : f"clock set and read back (attempt {attempt})")
