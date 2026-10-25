@@ -483,14 +483,16 @@ class GrowattDongle
     end, true)
   end
 
-  # writes the dongle's local time (from NTP) into the inverter clock H45-H50
+  # writes the dongle's local time (from NTP) into the inverter clock H45-H50.
+  # The SPF ES Plus acknowledges six single writes (FC06) sent back to back but keeps only
+  # one of them, so the clock goes in as one block (FC16), is read back and compared.
+  # Attempts: 1 block, 2 single writes 0.6 s apart, 3 block again.
   def cmd_clock()
     var err = nil
-    var t = tasmota.rtc()["local"]
     if !self.set_write err = "settings changes are off (Dongle settings page)"
     elif self.wbusy err = "another change is in progress"
     elif !self.online() err = "inverter not answering"
-    elif t < 1700000000 err = "dongle time not set yet (no NTP)"
+    elif tasmota.rtc()["local"] < 1700000000 err = "dongle time not set yet (no NTP)"
     end
     if err != nil
       tasmota.resp_cmnd(json.dump({"GrowattClock": {"Result": "Error", "Message": err}}))
@@ -498,28 +500,86 @@ class GrowattDongle
       self.publish("GROWATT_INFO", self.info())
       return
     end
-    var d = tasmota.time_dump(t)
-    var vals = [d["year"], d["month"], d["day"], d["hour"], d["min"], d["sec"]]
-    var txt = format("%04d-%02d-%02d %02d:%02d:%02d", vals[0], vals[1], vals[2], vals[3], vals[4], vals[5])
     self.wbusy = true
-    var fails = []
-    var i = 0
-    while i < 6
-      var reg = 45 + i
-      var p = bytes()
-      p.add(self.addr, 1) p.add(6, 1) p.add(reg, -2) p.add(vals[i], -2)
-      var last = (i == 5)
-      self.enqueue(p, def (r)
-        if r == nil || (r[1] & 0x80) != 0 fails.push(reg) end
-        if last
-          self.wbusy = false
-          self.set_result("clock", txt, size(fails) == 0, size(fails) == 0 ? "clock set" : f"registers not written: {fails}")
-          self.read_settings()
-        end
-      end, true)
-      i += 1
-    end
+    var txt = self.clock_try(1)
     tasmota.resp_cmnd(json.dump({"GrowattClock": {"Value": txt, "Result": "Queued"}}))
+  end
+
+  def clock_now()
+    var d = tasmota.time_dump(tasmota.rtc()["local"])
+    return [d["year"], d["month"], d["day"], d["hour"], d["min"], d["sec"]]
+  end
+
+  def clock_txt(v)
+    return format("%04d-%02d-%02d %02d:%02d:%02d", v[0], v[1], v[2], v[3], v[4], v[5])
+  end
+
+  # one attempt; returns the time it writes
+  def clock_try(attempt)
+    var vals = self.clock_now()
+    var txt = self.clock_txt(vals)
+    if attempt == 2
+      # single writes, spaced out so the inverter can store each one
+      var fails = []
+      var i = 0
+      while i < 6
+        var reg = 45 + i
+        var last = (i == 5)
+        var p = bytes()
+        p.add(self.addr, 1) p.add(6, 1) p.add(reg, -2) p.add(vals[i], -2)
+        self.enqueue(p, def (r)
+          if r == nil || (r[1] & 0x80) != 0 fails.push(reg) end
+          self.next_send = tasmota.millis() + 600
+          if last self.clock_check(attempt, vals, size(fails) > 0 ? f"registers not written: {fails}" : nil) end
+        end, true)
+        i += 1
+      end
+    else
+      var p = bytes()
+      p.add(self.addr, 1) p.add(16, 1) p.add(45, -2) p.add(6, -2) p.add(12, 1)
+      for v: vals p.add(v, -2) end
+      self.enqueue(p, def (r)
+        self.next_send = tasmota.millis() + 300
+        var e = nil
+        if r == nil e = "no answer from the inverter"
+        elif (r[1] & 0x80) != 0 e = f"refused by the inverter (code {r[2]})"
+        end
+        self.clock_check(attempt, vals, e)
+      end, true)
+    end
+    return txt
+  end
+
+  # reads H45-H50 back; the date must match and the time be within a few seconds
+  def clock_check(attempt, vals, werr)
+    self.enqueue(self.read_req(3, 45, 6), def (rb)
+      var msg = werr
+      if msg == nil
+        if !self.store(self.hold, 45, rb)
+          msg = "clock not read back"
+        else
+          var h = self.hold
+          var ok = h[45] == vals[0] && h[46] == vals[1] && h[47] == vals[2]
+          var dt = (h[48] * 3600 + h[49] * 60 + h[50]) - (vals[3] * 3600 + vals[4] * 60 + vals[5])
+          if !ok || dt < -2 || dt > 20
+            msg = "inverter kept " + self.clock_txt([h[45], h[46], h[47], h[48], h[49], h[50]])
+          end
+        end
+      end
+      var txt = self.clock_txt(vals)
+      if msg == nil
+        self.wbusy = false
+        self.set_result("clock", txt, true, attempt == 1 ? "clock set and read back" : f"clock set and read back (attempt {attempt})")
+        self.read_settings()
+      elif attempt < 3
+        tasmota.log(f"GRW: clock attempt {attempt}: {msg}", 2)
+        self.clock_try(attempt + 1)
+      else
+        self.wbusy = false
+        self.set_result("clock", txt, false, msg)
+        self.read_settings()
+      end
+    end, true)
   end
 
   # telemetry (MQTT tele/<topic>/SENSOR), sent every TelePeriod

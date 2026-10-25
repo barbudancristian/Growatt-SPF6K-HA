@@ -126,6 +126,24 @@ r = tasmota.run_cmd("GrowattClock", "")
 run(500)
 check(HOLD[45] == 2026 && HOLD[46] == 10 && HOLD[47] == 23 && HOLD[48] == 14 && HOLD[50] == 9, "clock written")
 check(json.load(PUBS["tele/growatt/GROWATT_SET"])["Result"] == "OK", "clock result")
+var fc16 = 0
+for w: SER_WRITES if w[1] == 16 fc16 += 1 end end
+check(fc16 == 1, "clock written as one block (FC16)")
+HOLD[45]=2040 HOLD[46]=2 HOLD[47]=25 HOLD[48]=11 HOLD[49]=20 HOLD[50]=9
+REFUSE16 = true
+r = tasmota.run_cmd("GrowattClock", "")
+run(6000)
+check(HOLD[45] == 2026 && HOLD[46] == 10 && HOLD[47] == 23 && HOLD[48] == 14 && HOLD[49] == 5, "clock falls back to single writes when FC16 is refused")
+ls = json.load(PUBS["tele/growatt/GROWATT_SET"])
+check(ls["Result"] == "OK" && string.find(ls["Message"], "attempt 2") >= 0, "fallback reported")
+REFUSE16 = false
+REFUSE[47] = true
+REFUSE16 = true
+r = tasmota.run_cmd("GrowattClock", "")
+run(8000)
+check(json.load(PUBS["tele/growatt/GROWATT_SET"])["Result"] == "Error", "clock error when nothing works")
+REFUSE.remove(47)
+REFUSE16 = false
 growatt.hold[39] = 0
 r = tasmota.run_cmd("GrowattSet", "shutdown_battery_capacity 20")
 check(r["GrowattSet"]["Result"] == "Error", "SOC thresholds refused on lead batteries")

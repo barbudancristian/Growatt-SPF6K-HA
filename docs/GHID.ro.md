@@ -191,7 +191,7 @@ Dongle-ul acceptă doar setările de mai jos, doar în limitele astea, și trimi
 | `buzzer` | H22 | Off · On |
 | `overload_restart` / `overtemperature_restart` | H20 / H21 | cod brut 0–2 / 0–1 |
 
-`cmnd/<topic>/GrowattClock` pune pe ceasul invertorului (H45–H50) ora dongle-ului, luată de pe internet (NTP). Invertorul își resetează contoarele „azi” la miezul nopții lui, deci ceasul contează.
+`cmnd/<topic>/GrowattClock` pune pe ceasul invertorului (H45–H50) ora dongle-ului, luată de pe internet (NTP). Cei șase regiștri se scriu dintr-o dată (FC16) și se citesc înapoi; dacă invertorul refuză sau păstrează altă oră, dongle-ul încearcă scrieri separate la 0,6 s una de alta, apoi încă o dată blocul, și raportează rezultatul în `sensor.growatt_N_last_setting_change`. Invertorul își resetează contoarele „azi” la miezul nopții lui, deci ceasul contează.
 
 Pornirea / oprirea la distanță (H0), tensiunea și frecvența de ieșire (H18, H19) și tipul bateriei (H39) se văd, dar intenționat **nu** se pot scrie: o valoare greșită poate opri ieșirea, poate strica aparatele sau poate rupe legătura cu BMS-ul. Le schimbi din panoul invertorului. La invertoare în paralel, ține setările identice pe toate.
 

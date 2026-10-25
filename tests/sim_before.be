@@ -23,6 +23,7 @@ HOLD[9]=0x3130 HOLD[10]=0x302E HOLD[11]=0x3036 HOLD[12]=0x3130 HOLD[13]=0x312E H
 HOLD[23]=0x5559 HOLD[24]=0x4E36 HOLD[25]=0x4633 HOLD[26]=0x4430 HOLD[27]=0x3137
 HOLD[45]=2102 HOLD[46]=10 HOLD[47]=22 HOLD[48]=11 HOLD[49]=19 HOLD[50]=58
 REFUSE = {}
+REFUSE16 = false
 PUBS = {}
 SER_WRITES = []
 
@@ -58,6 +59,9 @@ class serial
       r.add(fc,1) r.add(st,-2) r.add(n,-2)
     elif fc == 6
       r.add(0x86,1) r.add(3,1)
+    elif fc == 16 && !REFUSE16
+      for i: 0..n-1 HOLD[st+i] = f.get(7+2*i,-2) end
+      r.add(fc,1) r.add(st,-2) r.add(n,-2)
     else
       r.add(fc|0x80,1) r.add(1,1)
     end

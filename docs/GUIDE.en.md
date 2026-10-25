@@ -191,7 +191,7 @@ The dongle accepts only these settings, only within these limits, and sends one 
 | `buzzer` | H22 | Off · On |
 | `overload_restart` / `overtemperature_restart` | H20 / H21 | raw code 0–2 / 0–1 |
 
-`cmnd/<topic>/GrowattClock` sets the inverter clock (H45–H50) to the dongle's time, which comes from the internet (NTP). The inverter resets its "today" counters at its own midnight, so the clock matters.
+`cmnd/<topic>/GrowattClock` sets the inverter clock (H45–H50) to the dongle's time, which comes from the internet (NTP). The six registers are written as one block (FC16) and read back; if the inverter refuses the block or keeps another time, the dongle tries single writes 0.6 s apart, then the block once more, and reports the result in `sensor.growatt_N_last_setting_change`. The inverter resets its "today" counters at its own midnight, so the clock matters.
 
 Remote on/off (H0), output voltage and frequency (H18, H19) and battery type (H39) are shown but **not** writable on purpose: a wrong value can switch the output off, damage appliances or break the BMS link. Change them on the inverter's own panel. With parallel inverters, keep the settings the same on all of them.
 
